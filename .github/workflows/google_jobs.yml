@@ -1,0 +1,38 @@
+name: Update Google Careers feed stats
+
+on:
+  schedule:
+    - cron: "0 1 * * *" # 매일 01:00 UTC (한국시간 오전 10시)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create folders
+        run: |
+          mkdir -p data
+          mkdir -p scripts
+
+      - name: Run fetch script
+        run: |
+          python scripts/fetch_google_jobs.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/google_jobs_summary.json data/google_jobs_raw.json
+          git commit -m "chore: update google careers feed stats" || echo "No changes"
+          git push
