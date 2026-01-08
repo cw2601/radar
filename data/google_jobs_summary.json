@@ -1,0 +1,195 @@
+{
+  "source": "https://www.google.com/about/careers/applications/jobs/feed.xml",
+  "generated_at_utc": "2026-01-08T14:54:49.711744+00:00",
+  "total_jobs_in_feed": 0,
+  "language_counts": [
+    [
+      "Chinese/Mandarin",
+      0
+    ],
+    [
+      "Hindi",
+      0
+    ],
+    [
+      "Spanish",
+      0
+    ],
+    [
+      "French",
+      0
+    ],
+    [
+      "Arabic",
+      0
+    ],
+    [
+      "Bengali",
+      0
+    ],
+    [
+      "Portuguese",
+      0
+    ],
+    [
+      "Russian",
+      0
+    ],
+    [
+      "Urdu",
+      0
+    ],
+    [
+      "Indonesian",
+      0
+    ],
+    [
+      "German",
+      0
+    ],
+    [
+      "Japanese",
+      0
+    ],
+    [
+      "Korean",
+      0
+    ],
+    [
+      "Swahili",
+      0
+    ],
+    [
+      "Marathi",
+      0
+    ],
+    [
+      "Telugu",
+      0
+    ],
+    [
+      "Turkish",
+      0
+    ],
+    [
+      "Tamil",
+      0
+    ],
+    [
+      "Vietnamese",
+      0
+    ]
+  ],
+  "data_type_counts": [
+    [
+      "Speech/ASR/TTS",
+      0
+    ],
+    [
+      "Text/Localization/Translation",
+      0
+    ],
+    [
+      "RLHF/Safety/Raters",
+      0
+    ]
+  ],
+  "language_x_data_type": {
+    "Chinese/Mandarin": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Hindi": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Spanish": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "French": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Arabic": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Bengali": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Portuguese": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Russian": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Urdu": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Indonesian": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "German": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Japanese": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Korean": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Swahili": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Marathi": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Telugu": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Turkish": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Tamil": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    },
+    "Vietnamese": {
+      "Speech/ASR/TTS": 0,
+      "Text/Localization/Translation": 0,
+      "RLHF/Safety/Raters": 0
+    }
+  },
+  "jobs_sample": []
+}
