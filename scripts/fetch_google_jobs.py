@@ -3,8 +3,10 @@ import json
 import re
 import sys
 import urllib.request
+import urllib.error
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
+from pathlib import Path
 
 FEED_URL = "https://www.google.com/about/careers/applications/jobs/feed.xml"
 
@@ -48,16 +50,52 @@ DATA_TYPES = {
     ],
 }
 
-def fetch_text(url: str) -> str:
+DATA_DIR = Path("data")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+def localname(tag: str) -> str:
+    # "{namespace}tag" -> "tag"
+    if not tag:
+        return ""
+    if "}" in tag:
+        return tag.split("}", 1)[1]
+    return tag
+
+def fetch_url(url: str) -> tuple[str, dict]:
+    """
+    Returns (text, meta)
+    meta includes: status_code, content_type, final_url
+    """
     req = urllib.request.Request(
         url,
         headers={
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/xml,text/xml,*/*;q=0.9",
+            "User-Agent": "Mozilla/5.0 (compatible; LanguageNeedsRadar/1.0)",
+            "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+            "Accept-Language": "en-US,en;q=0.9",
         },
+        method="GET",
     )
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read().decode("utf-8", errors="replace")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            raw = r.read()
+            ct = r.headers.get("Content-Type", "")
+            final_url = r.geturl()
+            status_code = getattr(r, "status", 200)
+            text = raw.decode("utf-8", errors="replace")
+            return text, {"status_code": status_code, "content_type": ct, "final_url": final_url}
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            body = ""
+        return body, {
+            "status_code": e.code,
+            "content_type": e.headers.get("Content-Type", "") if e.headers else "",
+            "final_url": getattr(e, "url", url),
+            "error": f"HTTPError {e.code}",
+        }
+    except Exception as e:
+        return "", {"status_code": None, "content_type": "", "final_url": url, "error": repr(e)}
 
 def strip_html(s: str) -> str:
     s = re.sub(r"<[^>]+>", " ", s or "")
@@ -70,96 +108,160 @@ def match_any(patterns, text: str) -> bool:
             return True
     return False
 
-def localname(tag: str) -> str:
-    # "{namespace}tag" -> "tag"
-    return tag.split("}", 1)[-1] if "}" in tag else tag
+def detect_and_extract_items(root: ET.Element):
+    """
+    Returns (feed_type, items)
+    items is a list of Elements representing entries/items
+    """
+    root_ln = localname(root.tag).lower()
 
-def find_first_text(el: ET.Element, wanted_local_names):
-    # wanted_local_names: ["title", "description", ...]
-    wanted = set(wanted_local_names)
-    for child in el.iter():
-        if localname(child.tag) in wanted and (child.text and child.text.strip()):
-            return child.text.strip()
+    # RSS
+    if root_ln == "rss":
+        items = root.findall(".//item")
+        return ("rss", items)
+
+    # Atom
+    if root_ln == "feed":
+        # atom:entry could be namespaced
+        items = [el for el in root.iter() if localname(el.tag).lower() == "entry"]
+        return ("atom", items)
+
+    # HTML or unexpected XML
+    if root_ln == "html":
+        return ("html", [])
+
+    # generic: try to find item/entry anywhere
+    candidates = []
+    for el in root.iter():
+        ln = localname(el.tag).lower()
+        if ln in ("item", "entry"):
+            candidates.append(el)
+
+    if candidates:
+        # if mixed, just call it generic_xml
+        return ("generic_xml", candidates)
+
+    return ("none", [])
+
+def get_text_child(el: ET.Element, name: str) -> str:
+    """
+    Finds first child by localname match (namespace-agnostic), returns .text or "".
+    """
+    name = name.lower()
+    for c in list(el):
+        if localname(c.tag).lower() == name:
+            return (c.text or "").strip()
     return ""
 
-def find_link(el: ET.Element) -> str:
-    # RSS: <link>https://...</link>
-    # Atom: <link href="https://..." rel="alternate" />
-    # Some feeds: multiple link tags
-    # 1) try href attribute
-    for child in el.iter():
-        if localname(child.tag) == "link":
-            href = (child.attrib.get("href") or "").strip()
+def get_link_from_atom_entry(entry: ET.Element) -> str:
+    # Atom: <link href="..."/>
+    for c in entry.iter():
+        if localname(c.tag).lower() == "link":
+            href = c.attrib.get("href", "").strip()
             if href:
                 return href
-    # 2) fallback to text content
-    for child in el.iter():
-        if localname(child.tag) == "link" and child.text and child.text.strip():
-            return child.text.strip()
+            # sometimes <link>text</link>
+            if c.text and c.text.strip():
+                return c.text.strip()
     return ""
 
-def find_published(el: ET.Element) -> str:
-    # RSS: pubDate
-    # Atom: published/updated
-    txt = find_first_text(el, ["pubDate", "published", "updated"])
-    return txt
+def build_job_obj_from_item(el: ET.Element, feed_type: str):
+    if feed_type in ("rss", "generic_xml"):
+        title = get_text_child(el, "title")
+        link = get_text_child(el, "link")
+        desc_raw = get_text_child(el, "description")
+        pub = get_text_child(el, "pubDate") or get_text_child(el, "published") or get_text_child(el, "updated")
+    else:
+        # atom
+        title = get_text_child(el, "title")
+        link = get_link_from_atom_entry(el)
+        # atom uses <summary> or <content>
+        desc_raw = get_text_child(el, "summary") or get_text_child(el, "content")
+        pub = get_text_child(el, "updated") or get_text_child(el, "published")
 
-def get_items(root: ET.Element):
-    # handle namespaces + RSS/Atom
-    # Try RSS items
-    items = root.findall(".//{*}item")
-    if items:
-        return items, "rss"
-    # Try Atom entries
-    entries = root.findall(".//{*}entry")
-    if entries:
-        return entries, "atom"
-    # Last resort: scan for tag endswith item/entry
-    found = []
-    for el in root.iter():
-        ln = localname(el.tag)
-        if ln in ("item", "entry"):
-            found.append(el)
-    if found:
-        # guess type based on first localname
-        return found, "unknown"
-    return [], "none"
+    desc = strip_html(desc_raw)
+    blob = f"{title} {desc}".lower()
+
+    langs_hit = [k for k, pats in LANGS.items() if match_any(pats, blob)]
+    types_hit = [k for k, pats in DATA_TYPES.items() if match_any(pats, blob)]
+
+    return {
+        "title": title,
+        "link": link,
+        "pubDate": pub,
+        "langs_hit": langs_hit,
+        "types_hit": types_hit,
+    }
 
 def main():
-    xml = fetch_text(FEED_URL)
-    root = ET.fromstring(xml)
+    xml_text, meta = fetch_url(FEED_URL)
 
-    items, feed_type = get_items(root)
+    # Save raw response for debugging (always)
+    debug_path = DATA_DIR / "google_feed_debug.txt"
+    with open(debug_path, "w", encoding="utf-8") as f:
+        f.write(f"URL: {FEED_URL}\n")
+        f.write(f"Final URL: {meta.get('final_url')}\n")
+        f.write(f"Status: {meta.get('status_code')}\n")
+        f.write(f"Content-Type: {meta.get('content_type')}\n")
+        if meta.get("error"):
+            f.write(f"Error: {meta.get('error')}\n")
+        f.write("\n---- BODY (first 20000 chars) ----\n")
+        f.write((xml_text or "")[:20000])
 
-    # Debug info (shows in GitHub Actions logs)
-    print("ROOT TAG:", root.tag)
-    print("FEED TYPE:", feed_type)
-    print("ITEMS FOUND:", len(items))
+    generated_at = datetime.now(timezone.utc).isoformat()
 
-    jobs = []
-    for it in items:
-        # common fields across RSS/Atom (with fallbacks)
-        title = find_first_text(it, ["title"]) or ""
-        link = find_link(it) or ""
-        desc_raw = (
-            find_first_text(it, ["description", "summary", "content"])
-            or ""
-        )
-        pub = find_published(it) or ""
+    # Try parse as XML
+    try:
+        root = ET.fromstring(xml_text)
+    except Exception as e:
+        out = {
+            "source": FEED_URL,
+            "generated_at_utc": generated_at,
+            "fetch_meta": meta,
+            "feed_type_detected": "parse_error",
+            "parse_error": repr(e),
+            "total_jobs_in_feed": 0,
+            "language_counts": sorted({k: 0 for k in LANGS.keys()}.items(), key=lambda x: x[1], reverse=True),
+            "data_type_counts": sorted({k: 0 for k in DATA_TYPES.keys()}.items(), key=lambda x: x[1], reverse=True),
+            "language_x_data_type": {k: {t: 0 for t in DATA_TYPES.keys()} for k in LANGS.keys()},
+            "jobs_sample": [],
+            "debug_file": str(debug_path),
+        }
+        with open(DATA_DIR / "google_jobs_summary.json", "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+        # Fail fast so you notice in Actions
+        print("ERROR: feed.xml is not valid XML. See data/google_feed_debug.txt")
+        sys.exit(1)
 
-        desc = strip_html(desc_raw)
-        blob = f"{title} {desc}".lower()
+    feed_type, items = detect_and_extract_items(root)
 
-        langs_hit = [k for k, pats in LANGS.items() if match_any(pats, blob)]
-        types_hit = [k for k, pats in DATA_TYPES.items() if match_any(pats, blob)]
+    # If HTML/none → that means “this is not a job feed anymore (or blocked/redirected)”
+    if feed_type in ("html", "none"):
+        out = {
+            "source": FEED_URL,
+            "generated_at_utc": generated_at,
+            "fetch_meta": meta,
+            "feed_type_detected": feed_type,
+            "root_tag": localname(root.tag),
+            "total_jobs_in_feed": 0,
+            "language_counts": sorted({k: 0 for k in LANGS.keys()}.items(), key=lambda x: x[1], reverse=True),
+            "data_type_counts": sorted({k: 0 for k in DATA_TYPES.keys()}.items(), key=lambda x: x[1], reverse=True),
+            "language_x_data_type": {k: {t: 0 for t in DATA_TYPES.keys()} for k in LANGS.keys()},
+            "jobs_sample": [],
+            "debug_file": str(debug_path),
+            "note": "feed.xml에서 RSS/Atom item/entry가 발견되지 않았습니다. 응답이 HTML(리다이렉트/봇차단/페이지)일 가능성이 큽니다.",
+        }
+        with open(DATA_DIR / "google_jobs_summary.json", "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+        with open(DATA_DIR / "google_jobs_raw.json", "w", encoding="utf-8") as f:
+            json.dump({"source": FEED_URL, "generated_at_utc": generated_at, "jobs": []}, f, ensure_ascii=False, indent=2)
 
-        jobs.append({
-            "title": (title or "").strip(),
-            "link": (link or "").strip(),
-            "pubDate": (pub or "").strip(),
-            "langs_hit": langs_hit,
-            "types_hit": types_hit,
-        })
+        print("WARN: No RSS/Atom items detected. Likely HTML/blocked/deprecated feed. See data/google_feed_debug.txt")
+        # Actions는 성공 처리로 두고 싶으면 exit(0), 실패로 띄우고 싶으면 exit(1)
+        # 일단 너가 빨리 알아차리게 실패로 처리해줄게.
+        sys.exit(1)
+
+    jobs = [build_job_obj_from_item(it, feed_type) for it in items]
 
     # Aggregate
     lang_counts = {k: 0 for k in LANGS.keys()}
@@ -179,35 +281,29 @@ def main():
 
     out = {
         "source": FEED_URL,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": generated_at,
+        "fetch_meta": meta,
         "feed_type_detected": feed_type,
         "total_jobs_in_feed": len(jobs),
         "language_counts": lang_sorted,
         "data_type_counts": type_sorted,
         "language_x_data_type": cross,
         "jobs_sample": jobs[:200],
+        "debug_file": str(debug_path),
     }
 
-    # Ensure folder exists (in Actions, folder may not exist)
-    import os
-    os.makedirs("data", exist_ok=True)
-
-    with open("data/google_jobs_summary.json", "w", encoding="utf-8") as f:
+    with open(DATA_DIR / "google_jobs_summary.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
 
-    with open("data/google_jobs_raw.json", "w", encoding="utf-8") as f:
+    with open(DATA_DIR / "google_jobs_raw.json", "w", encoding="utf-8") as f:
         json.dump(
-            {"source": FEED_URL, "generated_at_utc": out["generated_at_utc"], "jobs": jobs},
+            {"source": FEED_URL, "generated_at_utc": generated_at, "feed_type_detected": feed_type, "jobs": jobs},
             f,
             ensure_ascii=False,
             indent=2,
         )
 
-    print(f"OK: {len(jobs)} items -> data/google_jobs_summary.json, data/google_jobs_raw.json")
+    print(f"OK: {len(jobs)} items (type={feed_type}) -> data/google_jobs_summary.json, data/google_jobs_raw.json")
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print("ERROR:", e)
-        sys.exit(1)
+    main()
