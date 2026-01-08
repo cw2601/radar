@@ -49,12 +49,17 @@ DATA_TYPES = {
 }
 
 def fetch_text(url: str) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/xml,text/xml,*/*;q=0.9",
+        },
+    )
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read().decode("utf-8", errors="replace")
 
 def strip_html(s: str) -> str:
-    # RSS description may contain HTML
     s = re.sub(r"<[^>]+>", " ", s or "")
     s = re.sub(r"\s+", " ", s).strip()
     return s
@@ -65,33 +70,93 @@ def match_any(patterns, text: str) -> bool:
             return True
     return False
 
+def localname(tag: str) -> str:
+    # "{namespace}tag" -> "tag"
+    return tag.split("}", 1)[-1] if "}" in tag else tag
+
+def find_first_text(el: ET.Element, wanted_local_names):
+    # wanted_local_names: ["title", "description", ...]
+    wanted = set(wanted_local_names)
+    for child in el.iter():
+        if localname(child.tag) in wanted and (child.text and child.text.strip()):
+            return child.text.strip()
+    return ""
+
+def find_link(el: ET.Element) -> str:
+    # RSS: <link>https://...</link>
+    # Atom: <link href="https://..." rel="alternate" />
+    # Some feeds: multiple link tags
+    # 1) try href attribute
+    for child in el.iter():
+        if localname(child.tag) == "link":
+            href = (child.attrib.get("href") or "").strip()
+            if href:
+                return href
+    # 2) fallback to text content
+    for child in el.iter():
+        if localname(child.tag) == "link" and child.text and child.text.strip():
+            return child.text.strip()
+    return ""
+
+def find_published(el: ET.Element) -> str:
+    # RSS: pubDate
+    # Atom: published/updated
+    txt = find_first_text(el, ["pubDate", "published", "updated"])
+    return txt
+
+def get_items(root: ET.Element):
+    # handle namespaces + RSS/Atom
+    # Try RSS items
+    items = root.findall(".//{*}item")
+    if items:
+        return items, "rss"
+    # Try Atom entries
+    entries = root.findall(".//{*}entry")
+    if entries:
+        return entries, "atom"
+    # Last resort: scan for tag endswith item/entry
+    found = []
+    for el in root.iter():
+        ln = localname(el.tag)
+        if ln in ("item", "entry"):
+            found.append(el)
+    if found:
+        # guess type based on first localname
+        return found, "unknown"
+    return [], "none"
+
 def main():
     xml = fetch_text(FEED_URL)
     root = ET.fromstring(xml)
 
-    # RSS typical path: channel/item
-    items = root.findall("./channel/item")
-    if not items:
-        # sometimes namespaces; fallback: find all item
-        items = root.findall(".//item")
+    items, feed_type = get_items(root)
+
+    # Debug info (shows in GitHub Actions logs)
+    print("ROOT TAG:", root.tag)
+    print("FEED TYPE:", feed_type)
+    print("ITEMS FOUND:", len(items))
 
     jobs = []
     for it in items:
-        title = (it.findtext("title") or "").strip()
-        link = (it.findtext("link") or "").strip()
-        desc_raw = it.findtext("description") or ""
-        desc = strip_html(desc_raw)
-        pub = (it.findtext("pubDate") or "").strip()
+        # common fields across RSS/Atom (with fallbacks)
+        title = find_first_text(it, ["title"]) or ""
+        link = find_link(it) or ""
+        desc_raw = (
+            find_first_text(it, ["description", "summary", "content"])
+            or ""
+        )
+        pub = find_published(it) or ""
 
+        desc = strip_html(desc_raw)
         blob = f"{title} {desc}".lower()
 
         langs_hit = [k for k, pats in LANGS.items() if match_any(pats, blob)]
         types_hit = [k for k, pats in DATA_TYPES.items() if match_any(pats, blob)]
 
         jobs.append({
-            "title": title,
-            "link": link,
-            "pubDate": pub,
+            "title": (title or "").strip(),
+            "link": (link or "").strip(),
+            "pubDate": (pub or "").strip(),
             "langs_hit": langs_hit,
             "types_hit": types_hit,
         })
@@ -109,25 +174,34 @@ def main():
         for t in j["types_hit"]:
             type_counts[t] += 1
 
-    # Sort languages by count
     lang_sorted = sorted(lang_counts.items(), key=lambda x: x[1], reverse=True)
+    type_sorted = sorted(type_counts.items(), key=lambda x: x[1], reverse=True)
 
     out = {
         "source": FEED_URL,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "feed_type_detected": feed_type,
         "total_jobs_in_feed": len(jobs),
         "language_counts": lang_sorted,
-        "data_type_counts": sorted(type_counts.items(), key=lambda x: x[1], reverse=True),
+        "data_type_counts": type_sorted,
         "language_x_data_type": cross,
-        "jobs_sample": jobs[:200],  # 너무 커질까봐 샘플만
+        "jobs_sample": jobs[:200],
     }
+
+    # Ensure folder exists (in Actions, folder may not exist)
+    import os
+    os.makedirs("data", exist_ok=True)
 
     with open("data/google_jobs_summary.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
 
-    # raw list도 남기고:
     with open("data/google_jobs_raw.json", "w", encoding="utf-8") as f:
-        json.dump({"source": FEED_URL, "generated_at_utc": out["generated_at_utc"], "jobs": jobs}, f, ensure_ascii=False, indent=2)
+        json.dump(
+            {"source": FEED_URL, "generated_at_utc": out["generated_at_utc"], "jobs": jobs},
+            f,
+            ensure_ascii=False,
+            indent=2,
+        )
 
     print(f"OK: {len(jobs)} items -> data/google_jobs_summary.json, data/google_jobs_raw.json")
 
