@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Language Needs Radar</title>
+  <style>
+    :root { color-scheme: light dark; }
+
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    main { flex: 1; }
+
+    header {
+      position: sticky; top: 0;
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(0,0,0,.12);
+      z-index: 10;
+    }
+    @media (prefers-color-scheme: dark) {
+      header { background: rgba(20,20,20,.85); border-bottom-color: rgba(255,255,255,.14); }
+    }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 14px; }
+    h1 { margin: 0; font-size: 16px; font-weight: 800; }
+    .hint { font-size: 12px; opacity: .75; line-height: 1.45; margin-top: 6px; }
+
+    .toolbar {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      margin-top: 12px;
+      font-size: 12px;
+      opacity: .9;
+    }
+    label { cursor: pointer; user-select: none; }
+    input[type="checkbox"] { transform: translateY(1px); }
+
+    .sectionTitle {
+      margin: 16px 0 8px;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .item {
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    @media (prefers-color-scheme: dark) {
+      .item { border-color: rgba(255,255,255,.14); }
+    }
+
+    .left { flex: 1; display: grid; gap: 6px; min-width: 0; }
+    .top { display: flex; gap: 8px; align-items: center; min-width: 0; }
+    .tag {
+      font-size: 11px; padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.14);
+      opacity: .8;
+      white-space: nowrap;
+    }
+
+    .title {
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .desc { font-size: 12px; opacity: .78; line-height: 1.45; }
+    .tip { font-size: 12px; opacity: .72; line-height: 1.45; }
+
+    .checks {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      opacity: .9;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .actions { display: grid; gap: 8px; }
+    .btn {
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.18);
+      background: transparent;
+      cursor: pointer;
+      opacity: .92;
+      white-space: nowrap;
+    }
+    @media (prefers-color-scheme: dark) {
+      .btn { border-color: rgba(255,255,255,.18); }
+    }
+    .btn:hover { opacity: 1; }
+
+    /* ✅ footer at the actual end (not fixed), but looks clean */
+    footer {
+      padding: 16px 0 20px;
+      text-align: center;
+      font-size: 12px;
+      opacity: .55;
+
+    }
+    @media (prefers-color-scheme: dark) {
+      footer { border-top-color: rgba(255,255,255,.14); }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <h1>Language Needs Radar</h1>
+    <div class="hint">
+      <b>나중에 보기</b> 버튼/필터로 목록 관리
+    </div>
+
+    <div class="toolbar">
+      <label><input type="checkbox" id="onlyLater">나중에 보기</label>
+    </div>
+
+    <div class="sectionTitle">탐색</div>
+    <div class="grid" id="grid-discovery"></div>
+
+    <div class="sectionTitle">HELM 벤치마크</div>
+    <div class="grid" id="grid-helm"></div>
+  </div>
+</header>
+
+<!-- ✅ main wrapper so footer can sit at bottom nicely -->
+<main></main>
+
+<footer>
+  conceived &amp; built by cw park
+</footer>
+
+<script>
+  const PAGES = [
+    {id:"hf", group:"discovery", title:"Hugging Face Papers Trending", tag:"Low-resource",
+     url:"https://huggingface.co/papers/trending?q=Low-resource+languages",
+     desc:"",
+     tip:"‘데이터 부족 언어’ 관련 최신 논문/트렌드 리스트."},
+
+    {id:"slator", group:"discovery", title:"Slator 검색: Low-resource languages", tag:"Industry",
+     url:"https://slator.com/?s=Low-resource+languages",
+     desc:"",
+     tip:"빅테크의 언어 확장, 파트너십, 프로그램 관련"},
+
+    {id:"xtreme", group:"discovery", title:"XTREME (Google Research)", tag:"Benchmark",
+     url:"https://sites.research.google/xtreme",
+     desc:"",
+     tip:"다국어 벤치마크 (언어별 FM 성능 비교)"},
+
+    {id:"sea", group:"helm", title:"HELM SEAHELM", tag:"SEA",
+     url:"https://crfm.stanford.edu/helm/seahelm/latest/",
+     desc:"",
+     tip:"동남아(SEA) 언어별 FM 성능 비교"},
+
+    {id:"thai", group:"helm", title:"HELM ThaiExam", tag:"TH",
+     url:"https://crfm.stanford.edu/helm/thaiexam/latest/",
+     desc:"",
+     tip:"태국어(Thai) FM 성능 비교"},
+
+    {id:"arabic", group:"helm", title:"HELM Arabic", tag:"AR",
+     url:"https://crfm.stanford.edu/helm/arabic/latest/",
+     desc:"",
+     tip:"아랍어(Arabic) FM 성능 비교"},
+
+    {id:"cleva", group:"helm", title:"HELM CLEVA", tag:"CN",
+     url:"https://crfm.stanford.edu/helm/cleva/latest/",
+     desc:"",
+     tip:"중국어(Chinese) FM 성능 비교"},
+
+    {id:"afr", group:"helm", title:"HELM Afr (MMLU + WinoGrande)", tag:"AFR",
+     url:"https://crfm.stanford.edu/helm/mmlu-winogrande-afr/latest/",
+     desc:"",
+     tip:"아프리카어(AFR) FM 성능 비교"}
+  ];
+
+  const LATER = "later_pages";
+  function get(key){ return JSON.parse(localStorage.getItem(key) || "{}"); }
+  function set(key,v){ localStorage.setItem(key, JSON.stringify(v)); }
+
+  function render(group){
+    const grid = document.getElementById(`grid-${group}`);
+    grid.innerHTML = "";
+
+    const later = get(LATER);
+    const onlyLater = document.getElementById("onlyLater").checked;
+
+    PAGES.filter(p=>p.group===group).forEach(p=>{
+      if(onlyLater && !later[p.id]) return;
+
+      const el = document.createElement("div");
+      el.className = "item";
+
+      el.innerHTML = `
+        <div class="left">
+          <div class="top">
+            <span class="tag">${p.tag}</span>
+            <span class="title" title="클릭하면 원문으로 열림">${p.title}</span>
+          </div>
+          <div class="desc">${p.desc}</div>
+          <div class="tip">🐤 ${p.tip}</div>
+
+          <div class="checks">
+            <label><input type="checkbox" ${later[p.id] ? "checked" : ""}> 나중에 보기</label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn">원문 ↗</button>
+        </div>
+      `;
+
+      const titleEl = el.querySelector(".title");
+      const laterCb = el.querySelector('input[type="checkbox"]');
+      const origBtn = el.querySelector(".btn");
+
+      titleEl.onclick = () => window.open(p.url, "_blank", "noopener,noreferrer");
+      origBtn.onclick  = () => window.open(p.url, "_blank", "noopener,noreferrer");
+
+      laterCb.onchange = () => { later[p.id] = !!laterCb.checked; set(LATER, later); };
+
+      grid.appendChild(el);
+    });
+  }
+
+  document.getElementById("onlyLater").onchange = ()=>{ render("discovery"); render("helm"); };
+
+  render("discovery");
+  render("helm");
+</script>
+</body>
+</html>
