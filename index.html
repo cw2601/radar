@@ -7,7 +7,6 @@
   <style>
     :root { color-scheme: light dark; }
 
-
     html, body { height: 100%; }
     body {
       margin: 0;
@@ -32,21 +31,53 @@
     h1 { margin: 0; font-size: 16px; font-weight: 800; }
     .hint { font-size: 12px; opacity: .75; line-height: 1.45; margin-top: 6px; }
 
-    .toolbar {
-      display: flex; gap: 16px; flex-wrap: wrap;
-      margin-top: 12px;
-      font-size: 12px;
-      opacity: .9;
-    }
-    label { cursor: pointer; user-select: none; }
-    input[type="checkbox"] { transform: translateY(1px); }
-
     .sectionTitle {
       margin: 16px 0 8px;
       font-size: 12px;
       letter-spacing: .08em;
       text-transform: uppercase;
       opacity: .7;
+color: #0020C2;
+    }
+
+    .subToolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 6px 0 10px;
+      font-size: 12px;
+      opacity: .92;
+    }
+    .subToolbar .sep { opacity: .55; }
+
+    .select, .text {
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,.18);
+      background: transparent;
+      opacity: .95;
+      outline: none;
+    }
+    .text { min-width: 220px; }
+    @media (prefers-color-scheme: dark) {
+      .select, .text { border-color: rgba(255,255,255,.18); }
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.14);
+      opacity: .9;
+      white-space: nowrap;
+    }
+    @media (prefers-color-scheme: dark) {
+      .badge { border-color: rgba(255,255,255,.18); }
     }
 
     .grid {
@@ -91,18 +122,34 @@
     }
 
     .desc { font-size: 12px; opacity: .78; line-height: 1.45; }
-    .tip { font-size: 12px; opacity: .72; line-height: 1.45; }
+    .tip  { font-size: 12px; opacity: .72; line-height: 1.45; }
 
-    .checks {
-      display: flex;
-      gap: 14px;
+    .metaLine {
       font-size: 12px;
-      opacity: .9;
-      margin-top: 4px;
+      opacity: .78;
+      display: flex;
+      gap: 8px;
+      align-items: center;
       flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .metaPill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.14);
+      opacity: .85;
+      white-space: nowrap;
+    }
+    @media (prefers-color-scheme: dark) {
+      .metaPill { border-color: rgba(255,255,255,.18); }
     }
 
-    .actions { display: grid; gap: 8px; }
+    .actions {
+      display: grid;
+      gap: 8px;
+      min-width: 210px;
+    }
     .btn {
       font-size: 12px;
       padding: 7px 10px;
@@ -112,23 +159,92 @@
       cursor: pointer;
       opacity: .92;
       white-space: nowrap;
+      text-align: center;
     }
     @media (prefers-color-scheme: dark) {
       .btn { border-color: rgba(255,255,255,.18); }
     }
     .btn:hover { opacity: 1; }
 
-    /* ✅ footer at the actual end (not fixed), but looks clean */
+    .btnRow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* --- footer / history --- */
     footer {
-      padding: 16px 0 20px;
+      padding: 18px 0 24px;
       text-align: center;
       font-size: 12px;
-      opacity: .55;
+      opacity: .75;
+    }
 
+    .historyWrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 14px 18px;
+      text-align: left;
+    }
+
+    .historyHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 10px 0 8px;
+    }
+
+    .historyTitle {
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .7;
+      margin: 0;
+    }
+
+    .historyList {
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 14px;
+      overflow: hidden;
     }
     @media (prefers-color-scheme: dark) {
-      footer { border-top-color: rgba(255,255,255,.14); }
+      .historyList { border-color: rgba(255,255,255,.14); }
     }
+
+    .hrow {
+      display: grid;
+      grid-template-columns: 170px 1fr 110px;
+      gap: 10px;
+      padding: 10px 12px;
+      align-items: center;
+      border-top: 1px solid rgba(0,0,0,.08);
+      cursor: pointer;
+    }
+    .hrow:first-child { border-top: 0; }
+    @media (prefers-color-scheme: dark) {
+      .hrow { border-top-color: rgba(255,255,255,.10); }
+    }
+    @media (max-width: 720px) {
+      .hrow { grid-template-columns: 1fr; gap: 6px; }
+    }
+
+    .htime { font-size: 12px; opacity: .75; white-space: nowrap; }
+    .htext { font-size: 12px; opacity: .9; min-width: 0; }
+    .htext b { font-weight: 800; }
+    .hopen {
+      justify-self: end;
+      font-size: 12px;
+      opacity: .8;
+      text-align: right;
+      white-space: nowrap;
+    }
+    @media (max-width: 720px) {
+      .hopen { justify-self: start; text-align: left; }
+    }
+
+    .muted { opacity: .65; }
+
   </style>
 </head>
 
@@ -137,11 +253,7 @@
   <div class="wrap">
     <h1>Language Needs Radar</h1>
     <div class="hint">
-      <b>나중에 보기</b> 버튼/필터로 목록 관리
-    </div>
-
-    <div class="toolbar">
-      <label><input type="checkbox" id="onlyLater">나중에 보기</label>
+      언어/벤치마크/채용 시그널
     </div>
 
     <div class="sectionTitle">탐색</div>
@@ -149,112 +261,393 @@
 
     <div class="sectionTitle">HELM 벤치마크</div>
     <div class="grid" id="grid-helm"></div>
+
+    <div class="sectionTitle">채용 시그널</div>
+
+    <div class="subToolbar">
+      <span style="opacity:.85;">단일 언어(채용) 선택:</span>
+
+      <select class="select" id="langSelect">
+        <option value="japanese">Japanese</option>
+        <option value="korean">Korean</option>
+        <option value="hindi">Hindi</option>
+        <option value="arabic">Arabic</option>
+        <option value="chinese">Chinese/Mandarin</option>
+        <option value="spanish">Spanish</option>
+        <option value="french">French</option>
+        <option value="bengali">Bengali/Bangla</option>
+        <option value="portuguese">Portuguese</option>
+        <option value="russian">Russian</option>
+        <option value="urdu">Urdu</option>
+        <option value="indonesian">Indonesian</option>
+        <option value="german">German</option>
+        <option value="swahili">Swahili</option>
+        <option value="marathi">Marathi</option>
+        <option value="telugu">Telugu</option>
+        <option value="turkish">Turkish</option>
+        <option value="tamil">Tamil</option>
+        <option value="vietnamese">Vietnamese</option>
+      </select>
+
+      <input class="text" id="langCustom" placeholder="(선택) 커스텀 언어 키워드 예: Thai, Yoruba" />
+
+      <span id="customBadge" class="badge" style="display:none;">✨ 커스텀 사용 중</span>
+
+      <span class="sep">|</span>
+      <span class="muted">버튼 클릭 시 해당 채용 사이트 내부 검색으로 열립니다.</span>
+    </div>
+
+    <div class="grid" id="grid-hiring"></div>
   </div>
 </header>
 
-<!-- ✅ main wrapper so footer can sit at bottom nicely -->
 <main></main>
+
+<div class="historyWrap">
+  <div class="historyHeader">
+    <p class="historyTitle">최근 접속 기록</p>
+    <button class="btn" id="clearHistoryBtn" style="min-width:110px;">기록 지우기</button>
+  </div>
+
+  <div class="historyList" id="historyList"></div>
+  <div class="muted" style="margin-top:8px; font-size:12px;">
+    * 기록은 사용자 개인 localStorage에 저장됩니다.
+  </div>
+</div>
 
 <footer>
   conceived &amp; built by cw park
 </footer>
 
 <script>
+  // ---------------------------
+  // History (localStorage)
+  // ---------------------------
+  const HISTORY_KEY = "radar_open_history_v1";
+  const HISTORY_MAX = 60;
+
+  function readHistory(){
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function writeHistory(list){
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  }
+  function nowKSTString(){
+    // runs in user's browser timezone; show locale string
+    const d = new Date();
+    // keep it neat: YYYY-MM-DD HH:MM
+    const pad = (n)=> String(n).padStart(2,"0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth()+1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
+
+  function addHistory(entry){
+    const list = readHistory();
+    // de-dupe identical consecutive opens
+    const top = list[0];
+    if (top && top.url === entry.url) {
+      list[0] = entry; // just refresh time
+    } else {
+      list.unshift(entry);
+    }
+    if (list.length > HISTORY_MAX) list.length = HISTORY_MAX;
+    writeHistory(list);
+    renderHistory();
+  }
+
+  function openAndLog(url, label, tag){
+    addHistory({
+      time: nowKSTString(),
+      label: label || "열기",
+      tag: tag || "",
+      url
+    });
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function renderHistory(){
+    const box = document.getElementById("historyList");
+    const list = readHistory();
+
+    if (!list.length) {
+      box.innerHTML = `
+        <div class="hrow" style="cursor:default;">
+          <div class="htime muted">-</div>
+          <div class="htext muted">아직 기록이 없어요.</div>
+          <div class="hopen muted">-</div>
+        </div>
+      `;
+      return;
+    }
+
+    box.innerHTML = "";
+    list.forEach((h, idx) => {
+      const row = document.createElement("div");
+      row.className = "hrow";
+      row.innerHTML = `
+        <div class="htime">${escapeHtml(h.time || "")}</div>
+        <div class="htext">
+          ${h.tag ? `<span class="metaPill" style="margin-right:6px;">${escapeHtml(h.tag)}</span>` : ``}
+          <b>${escapeHtml(h.label || "")}</b>
+          <span class="muted" style="margin-left:6px;">${escapeHtml((h.url || "").replace(/^https?:\/\//,""))}</span>
+        </div>
+        <div class="hopen">다시 열기 ↗</div>
+      `;
+      row.onclick = () => openAndLog(h.url, h.label, h.tag);
+      box.appendChild(row);
+    });
+  }
+
+  document.getElementById("clearHistoryBtn").onclick = () => {
+    writeHistory([]);
+    renderHistory();
+  };
+
+  // ---------------------------
+  // Hiring search (simple keywords)
+  // ---------------------------
+  const SINGLE_LANG_KEYWORD = {
+    chinese: "chinese mandarin",
+    arabic: "arabic",
+    bengali: "bengali bangla",
+    indonesian: "indonesian bahasa",
+    japanese: "japanese",
+    korean: "korean",
+    hindi: "hindi",
+    spanish: "spanish",
+    french: "french",
+    portuguese: "portuguese",
+    russian: "russian",
+    urdu: "urdu",
+    german: "german",
+    swahili: "swahili",
+    marathi: "marathi",
+    telugu: "telugu",
+    turkish: "turkish",
+    tamil: "tamil",
+    vietnamese: "vietnamese"
+  };
+
+  function getPickedLangKeyword(){
+    const custom = (document.getElementById("langCustom").value || "").trim();
+    if (custom) return custom;
+    const key = document.getElementById("langSelect").value;
+    return SINGLE_LANG_KEYWORD[key] || "japanese";
+  }
+  function isCustomActive(){
+    return ((document.getElementById("langCustom").value || "").trim().length > 0);
+  }
+  function updateCustomBadge(){
+    document.getElementById("customBadge").style.display = isCustomActive() ? "inline-flex" : "none";
+  }
+
+  function buildCompanySearchUrl(companyId, query){
+    const q = encodeURIComponent(query);
+
+    if (companyId === "google") return `https://careers.google.com/jobs/results/?q=${q}`;
+    if (companyId === "meta") return `https://www.metacareers.com/jobs/?q=${q}`;
+    if (companyId === "openai") return `https://openai.com/careers/search/?q=${q}`;
+    if (companyId === "anthropic") return `https://boards.greenhouse.io/anthropic?query=${q}`;
+    return "#";
+  }
+
+  function buildHiringUrls(companyId){
+    const lang = getPickedLangKeyword();
+    return {
+      base: buildCompanySearchUrl(companyId, lang),
+      speech: buildCompanySearchUrl(companyId, `${lang} speech`),
+      translation: buildCompanySearchUrl(companyId, `${lang} translation`),
+      localization: buildCompanySearchUrl(companyId, `${lang} localization`),
+      policy: buildCompanySearchUrl(companyId, `${lang} policy`),
+      redteaming: buildCompanySearchUrl(companyId, `${lang} red teaming`),
+      rlhf: buildCompanySearchUrl(companyId, `${lang} rlhf`),
+      safety: buildCompanySearchUrl(companyId, `${lang} safety`)
+    };
+  }
+
+  // ---------------------------
+  // Page cards
+  // ---------------------------
   const PAGES = [
+    // discovery
     {id:"hf", group:"discovery", title:"Hugging Face Papers Trending", tag:"Low-resource",
      url:"https://huggingface.co/papers/trending?q=Low-resource+languages",
-     desc:"",
      tip:"‘데이터 부족 언어’ 관련 최신 논문/트렌드 리스트."},
 
     {id:"slator", group:"discovery", title:"Slator 검색: Low-resource languages", tag:"Industry",
      url:"https://slator.com/?s=Low-resource+languages",
-     desc:"",
      tip:"빅테크의 언어 확장, 파트너십, 프로그램 관련"},
 
     {id:"xtreme", group:"discovery", title:"XTREME (Google Research)", tag:"Benchmark",
      url:"https://sites.research.google/xtreme",
-     desc:"",
      tip:"다국어 벤치마크 (언어별 FM 성능 비교)"},
 
+    // HELM
     {id:"sea", group:"helm", title:"HELM SEAHELM", tag:"SEA",
      url:"https://crfm.stanford.edu/helm/seahelm/latest/",
-     desc:"",
      tip:"동남아(SEA) 언어별 FM 성능 비교"},
 
     {id:"thai", group:"helm", title:"HELM ThaiExam", tag:"TH",
      url:"https://crfm.stanford.edu/helm/thaiexam/latest/",
-     desc:"",
      tip:"태국어(Thai) FM 성능 비교"},
 
     {id:"arabic", group:"helm", title:"HELM Arabic", tag:"AR",
      url:"https://crfm.stanford.edu/helm/arabic/latest/",
-     desc:"",
      tip:"아랍어(Arabic) FM 성능 비교"},
 
     {id:"cleva", group:"helm", title:"HELM CLEVA", tag:"CN",
      url:"https://crfm.stanford.edu/helm/cleva/latest/",
-     desc:"",
      tip:"중국어(Chinese) FM 성능 비교"},
 
     {id:"afr", group:"helm", title:"HELM Afr (MMLU + WinoGrande)", tag:"AFR",
      url:"https://crfm.stanford.edu/helm/mmlu-winogrande-afr/latest/",
-     desc:"",
-     tip:"아프리카어(AFR) FM 성능 비교"}
+     tip:"아프리카어(AFR) FM 성능 비교"},
+
+    // hiring
+    {id:"hire_google", group:"hiring", title:"Google 채용", tag:"Google", companyId:"google",
+     tip:"선택 언어 + 키워드로 Google Careers 내부 검색"},
+
+    {id:"hire_meta", group:"hiring", title:"Meta 채용", tag:"Meta", companyId:"meta",
+     tip:"선택 언어 + 키워드로 Meta Careers 내부 검색"},
+
+    {id:"hire_openai", group:"hiring", title:"OpenAI 채용", tag:"OpenAI", companyId:"openai",
+     tip:"선택 언어 + 키워드로 OpenAI Careers 내부 검색"}
   ];
 
-  const LATER = "later_pages";
-  function get(key){ return JSON.parse(localStorage.getItem(key) || "{}"); }
-  function set(key,v){ localStorage.setItem(key, JSON.stringify(v)); }
+  function escapeHtml(str){
+    return (str || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
   function render(group){
     const grid = document.getElementById(`grid-${group}`);
     grid.innerHTML = "";
 
-    const later = get(LATER);
-    const onlyLater = document.getElementById("onlyLater").checked;
-
     PAGES.filter(p=>p.group===group).forEach(p=>{
-      if(onlyLater && !later[p.id]) return;
-
       const el = document.createElement("div");
       el.className = "item";
+
+      if(group !== "hiring"){
+        el.innerHTML = `
+          <div class="left">
+            <div class="top">
+              <span class="tag">${p.tag}</span>
+              <span class="title" title="클릭하면 원문으로 열림">${p.title}</span>
+            </div>
+            <div class="tip">🐶 ${p.tip}</div>
+          </div>
+          <div class="actions">
+            <button class="btn btnOpen">원문 ↗</button>
+          </div>
+        `;
+
+        const titleEl = el.querySelector(".title");
+        const btnOpen = el.querySelector(".btnOpen");
+
+        const open = () => openAndLog(p.url, p.title, p.tag);
+        titleEl.onclick = open;
+        btnOpen.onclick = open;
+
+        grid.appendChild(el);
+        return;
+      }
+
+      // hiring cards
+      const langNow = getPickedLangKeyword();
+      const customOn = isCustomActive();
 
       el.innerHTML = `
         <div class="left">
           <div class="top">
             <span class="tag">${p.tag}</span>
-            <span class="title" title="클릭하면 원문으로 열림">${p.title}</span>
+            <span class="title" title="클릭하면 (선택 언어)로 검색">${p.title}</span>
           </div>
-          <div class="desc">${p.desc}</div>
-          <div class="tip">🐤 ${p.tip}</div>
 
-          <div class="checks">
-            <label><input type="checkbox" ${later[p.id] ? "checked" : ""}> 나중에 보기</label>
+          <div class="metaLine">
+            <span style="opacity:.75;">현재:</span>
+            <span class="metaPill">${escapeHtml(langNow)}</span>
+            ${customOn ? `<span class="metaPill">✨ 커스텀</span>` : ``}
           </div>
+
+          <div class="tip">🐱 ${p.tip}</div>
         </div>
 
         <div class="actions">
-          <button class="btn">원문 ↗</button>
+          <button class="btn b_lang">선택 언어</button>
+
+          <div class="btnRow">
+            <button class="btn b_speech">+speech</button>
+            <button class="btn b_trans">+translation</button>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn b_local">+localization</button>
+            <button class="btn b_policy">+policy</button>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn b_red">+red teaming</button>
+            <button class="btn b_rlhf">+rlhf</button>
+          </div>
+
+          <button class="btn b_safety">+safety</button>
         </div>
       `;
 
       const titleEl = el.querySelector(".title");
-      const laterCb = el.querySelector('input[type="checkbox"]');
-      const origBtn = el.querySelector(".btn");
 
-      titleEl.onclick = () => window.open(p.url, "_blank", "noopener,noreferrer");
-      origBtn.onclick  = () => window.open(p.url, "_blank", "noopener,noreferrer");
+      const open = (key) => {
+        const u = buildHiringUrls(p.companyId)[key];
+        const labelMap = {
+          base: `${p.title} / ${langNow}`,
+          speech: `${p.title} / ${langNow} +speech`,
+          translation: `${p.title} / ${langNow} +translation`,
+          localization: `${p.title} / ${langNow} +localization`,
+          policy: `${p.title} / ${langNow} +policy`,
+          redteaming: `${p.title} / ${langNow} +red teaming`,
+          rlhf: `${p.title} / ${langNow} +rlhf`,
+          safety: `${p.title} / ${langNow} +safety`
+        };
+        openAndLog(u, labelMap[key] || `${p.title} / ${langNow}`, p.tag);
+      };
 
-      laterCb.onchange = () => { later[p.id] = !!laterCb.checked; set(LATER, later); };
+      titleEl.onclick = () => open("base");
+      el.querySelector(".b_lang").onclick = () => open("base");
+      el.querySelector(".b_speech").onclick = () => open("speech");
+      el.querySelector(".b_trans").onclick = () => open("translation");
+      el.querySelector(".b_local").onclick = () => open("localization");
+      el.querySelector(".b_policy").onclick = () => open("policy");
+      el.querySelector(".b_red").onclick = () => open("redteaming");
+      el.querySelector(".b_rlhf").onclick = () => open("rlhf");
+      el.querySelector(".b_safety").onclick = () => open("safety");
 
       grid.appendChild(el);
     });
   }
 
-  document.getElementById("onlyLater").onchange = ()=>{ render("discovery"); render("helm"); };
+  function renderAll(){
+    updateCustomBadge();
+    render("discovery");
+    render("helm");
+    render("hiring");
+    renderHistory();
+  }
 
-  render("discovery");
-  render("helm");
+  document.getElementById("langSelect").onchange = renderAll;
+  document.getElementById("langCustom").addEventListener("input", renderAll);
+
+  // initial
+  updateCustomBadge();
+  renderAll();
 </script>
 </body>
 </html>
