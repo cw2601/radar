@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       serviceKey,
       type: "json",
       pageNo: String(req.query.pageNo || "1"),
-      numOfRows: String(req.query.numOfRows || "100"), // 기본값 100으로 증가
+      numOfRows: String(req.query.numOfRows || "100"),
     });
 
     if (kind === "bid") {
@@ -180,9 +180,9 @@ function extractItems(raw, kind, q) {
 
   const qlc = String(q || "").toLowerCase().trim();
   
-  // 검색어가 있을 때만 필터링 (대소문자 구분 없이)
+  // 검색어로 필터링
   const hasQ = (s) => {
-    if (!qlc) return true; // 검색어가 없으면 모두 통과
+    if (!qlc) return true;
     const str = String(s || "").toLowerCase();
     return str.includes(qlc);
   };
@@ -200,7 +200,7 @@ function extractItems(raw, kind, q) {
         date: date,
         time: time,
         org: x?.ntceInsttNm || x?.dmndInsttNm || "",
-        amount: prettifyAmount(x?.asignBdgtAmt ?? x?.presmptPrce ?? ""),
+        amount: x?.asignBdgtAmt ?? x?.presmptPrce ?? "",
         status: x?.bidNtceSttusNm || "",
         _idA: bidNo,
         _idB: bidOrd,
@@ -217,7 +217,7 @@ function extractItems(raw, kind, q) {
         date: date,
         time: time,
         org: x?.ntceInsttNm || x?.dmndInsttNm || "",
-        amount: prettifyAmount(x?.scsbidAmt ?? x?.cntrctAmt ?? ""),
+        amount: x?.scsbidAmt ?? x?.cntrctAmt ?? "",
         winner: x?.prtcptnEntrpsNm || x?.sucsfnEntrpsNm || "",
         status: x?.bidNtceSttusNm || "",
       };
@@ -231,7 +231,7 @@ function extractItems(raw, kind, q) {
       title,
       date: date,
       org: x?.dmndInsttNm || x?.cntrctInsttNm || x?.ntceInsttNm || "",
-      amount: prettifyAmount(x?.cntrctAmt ?? x?.contAmt ?? ""),
+      amount: x?.cntrctAmt ?? x?.contAmt ?? "",
       period: x?.cntrctPrd || x?.cntrctPeriod || "",
       status: x?.cntrctCnclsSttusNm || "",
     };
@@ -243,17 +243,34 @@ function extractItems(raw, kind, q) {
   const mkSearchUrl = (keyword) =>
     `https://www.g2b.go.kr:8101/ep/tbid/tbidList.do?bidNm=${encodeURIComponent(keyword || "")}`;
 
+  // URL 생성 및 금액 포맷팅
   const withUrl = filtered.map((it) => {
+    // 금액 포맷팅
+    const amountStr = prettifyAmount(it.amount);
+    
+    let url = "";
     if (kind === "bid" && it._idA) {
       const bidno = String(it._idA);
       const bidseq = String(it._idB || "00").padStart(2, "0");
-      const deep =
-        `https://www.g2b.go.kr:8081/ep/invitation/publish/bidInfoDtl.do` +
-        `?bidno=${encodeURIComponent(bidno)}&bidseq=${encodeURIComponent(bidseq)}` +
-        `&releaseYn=Y&taskClCd=5`;
-      return { ...it, url: deep };
+      url = `https://www.g2b.go.kr:8081/ep/invitation/publish/bidInfoDtl.do` +
+            `?bidno=${encodeURIComponent(bidno)}&bidseq=${encodeURIComponent(bidseq)}` +
+            `&releaseYn=Y&taskClCd=5`;
+    } else {
+      url = mkSearchUrl(it.title);
     }
-    return { ...it, url: mkSearchUrl(it.title) };
+    
+    return {
+      title: it.title,
+      date: it.date,
+      time: it.time,
+      org: it.org,
+      amount: amountStr,
+      status: it.status,
+      winner: it.winner,
+      period: it.period,
+      url: url,
+      fallbackUrl: mkSearchUrl(it.title)
+    };
   });
 
   return {
@@ -267,7 +284,7 @@ function prettifyAmount(v) {
   const s = String(v ?? "").trim();
   if (!s) return "";
   const num = Number(String(s).replace(/[^\d.]/g, ""));
-  if (!Number.isFinite(num) || num === 0) return s;
+  if (!Number.isFinite(num) || num === 0) return "";
   const intLike = Math.round(num);
   return intLike.toLocaleString("en-US");
 }
