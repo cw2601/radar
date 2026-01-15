@@ -6,968 +6,134 @@
   <title>AI Trendboard</title>
   <style>
     :root { color-scheme: light dark; }
-
     html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-    }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; display: flex; flex-direction: column; }
     main { flex: 1; }
-
-    header {
-      position: sticky; top: 0;
-      background: rgba(255,255,255,.9);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(0,0,0,.12);
-      z-index: 10;
-    }
-    @media (prefers-color-scheme: dark) {
-      header { background: rgba(20,20,20,.85); border-bottom-color: rgba(255,255,255,.14); }
-    }
-
+    header { position: sticky; top: 0; background: rgba(255,255,255,.9); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(0,0,0,.12); z-index: 10; }
+    @media (prefers-color-scheme: dark) { header { background: rgba(20,20,20,.85); border-bottom-color: rgba(255,255,255,.14); } }
     .wrap { max-width: 1200px; margin: 0 auto; padding: 14px; }
     h1 { margin: 0; font-size: 16px; font-weight: 800; }
     .hint { font-size: 12px; opacity: .75; line-height: 1.45; margin-top: 6px; }
-
-    .sectionTitle {
-      margin: 16px 0 8px;
-      font-size: 12px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      opacity: .7;
-      color: #0020C2;
-    }
-
-    .subToolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin: 6px 0 10px;
-      font-size: 12px;
-      opacity: .92;
-    }
-    .subToolbar .sep { opacity: .55; }
-
-    .select, .text {
-      font-size: 12px;
-      padding: 7px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,.18);
-      background: transparent;
-      opacity: .95;
-      outline: none;
-    }
+    .sectionTitle { margin: 16px 0 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; color: #0020C2; }
+    .subToolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 6px 0 10px; font-size: 12px; opacity: .92; }
+    .sep { opacity: .55; }
+    .select, .text { font-size: 12px; padding: 7px 10px; border-radius: 10px; border: 1px solid rgba(0,0,0,.18); background: transparent; opacity: .95; outline: none; }
     .text { min-width: 220px; }
-    @media (prefers-color-scheme: dark) {
-      .select, .text { border-color: rgba(255,255,255,.18); }
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.14);
-      opacity: .9;
-      white-space: nowrap;
-    }
-    @media (prefers-color-scheme: dark) {
-      .badge { border-color: rgba(255,255,255,.18); }
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-    @media (max-width: 860px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-
-    .item {
-      border: 1px solid rgba(0,0,0,.12);
-      border-radius: 14px;
-      padding: 12px;
-      display: flex;
-      gap: 12px;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    @media (prefers-color-scheme: dark) {
-      .item { border-color: rgba(255,255,255,.14); }
-    }
-
-    /* PPS 상태별 스타일 */
-    .item.status-cancel { background: rgba(255, 0, 0, 0.05); border-color: rgba(255, 0, 0, 0.2) !important; opacity: 0.8; }
-    .item.status-correct { background: rgba(255, 165, 0, 0.05); border-color: rgba(255, 165, 0, 0.3) !important; }
+    @media (prefers-color-scheme: dark) { .select, .text { border-color: rgba(255,255,255,.18); } }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    .item { border: 1px solid rgba(0,0,0,.12); border-radius: 14px; padding: 14px; display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; background: rgba(255,255,255,.7); transition: transform .15s ease; }
+    @media (prefers-color-scheme: dark) { .item { border-color: rgba(255,255,255,.14); background: rgba(40,40,40,.4); } }
+    .item:hover { transform: translateY(-2px); }
+    
+    /* 상태별 스타일 */
+    .item.status-cancel { background: rgba(255, 0, 0, 0.06); border-color: rgba(255, 0, 0, 0.2) !important; opacity: 0.8; }
+    .item.status-correct { background: rgba(255, 165, 0, 0.06); border-color: rgba(255, 165, 0, 0.3) !important; }
 
     .left { flex: 1; display: grid; gap: 6px; min-width: 0; }
     .top { display: flex; gap: 8px; align-items: center; min-width: 0; }
-    .tag {
-      font-size: 11px; padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.14);
-      opacity: .8;
-      white-space: nowrap;
-    }
+    .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(0,0,0,.14); opacity: .8; white-space: nowrap; font-weight: 700; }
+    .title { font-size: 14px; font-weight: 800; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .metaLine { font-size: 12px; opacity: .78; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+    .metaPill { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(0,0,0,.14); opacity: .85; white-space: nowrap; }
+    .actions { display: grid; gap: 8px; min-width: 140px; }
+    .btn { font-size: 12px; padding: 7px 10px; border-radius: 999px; border: 1px solid rgba(0,0,0,.18); background: transparent; cursor: pointer; opacity: .92; text-align: center; }
+    .btn:hover { background: rgba(0,0,0,.05); }
 
-    .title {
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    /* 분석 요약 바 */
+    .pps-summary-bar { grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 14px; background: rgba(0, 32, 194, 0.05); border-radius: 12px; font-size: 12px; border: 1px solid rgba(0, 32, 194, 0.15); margin-bottom: 4px; }
+    .summary-chip { font-weight: 800; color: #0020C2; }
+    @media (prefers-color-scheme: dark) { .summary-chip { color: #78A0FF; } }
 
-    .desc { font-size: 12px; opacity: .78; line-height: 1.45; }
-    .tip  { font-size: 12px; opacity: .72; line-height: 1.45; }
-
-    .metaLine {
-      font-size: 12px;
-      opacity: .78;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 2px;
-    }
-    .metaPill {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.14);
-      opacity: .85;
-      white-space: nowrap;
-    }
-    @media (prefers-color-scheme: dark) {
-      .metaPill { border-color: rgba(255,255,255,.18); }
-    }
-
-    /* 분석 요약 바 스타일 */
-    .pps-summary-bar {
-      grid-column: 1 / -1;
-      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;
-      padding: 10px 14px; background: rgba(0, 32, 194, 0.05); border-radius: 12px;
-      font-size: 12px; border: 1px solid rgba(0, 32, 194, 0.12);
-      align-items: center;
-    }
-    .summary-chip { font-weight: 700; color: #0020C2; }
-    @media (prefers-color-scheme: dark) {
-      .pps-summary-bar { background: rgba(120, 160, 255, 0.08); border-color: rgba(120, 160, 255, 0.15); }
-      .summary-chip { color: #78A0FF; }
-    }
-
-    .actions {
-      display: grid;
-      gap: 8px;
-      min-width: 210px;
-    }
-    .btn {
-      font-size: 12px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.18);
-      background: transparent;
-      cursor: pointer;
-      opacity: .92;
-      white-space: nowrap;
-      text-align: center;
-    }
-    @media (prefers-color-scheme: dark) {
-      .btn { border-color: rgba(255,255,255,.18); }
-    }
-    .btn:hover { opacity: 1; }
-
-    .btnRow {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .kwWrap { display: grid; gap: 6px; margin-top: 2px; }
-    .kwRow {
-      display: grid;
-      grid-template-columns: 1fr 90px;
-      gap: 10px;
-      align-items: center;
-      font-size: 12px;
-      opacity: .92;
-    }
-    .kwWord { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .kwBarWrap {
-      height: 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.14);
-      overflow: hidden;
-      opacity: .9;
-    }
-    .kwBar {
-      height: 100%;
-      width: 0%;
-      background: currentColor;
-      opacity: .35;
-    }
-    @media (prefers-color-scheme: dark) {
-      .kwBarWrap { border-color: rgba(255,255,255,.18); }
-      .kwBar { opacity: .45; }
-    }
-    .kwMeta { font-size: 12px; opacity: .72; line-height: 1.45; }
-    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-
-    footer {
-      padding: 18px 0 24px;
-      text-align: center;
-      font-size: 12px;
-      opacity: .75;
-    }
-
-    .historyWrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 14px 18px;
-      text-align: left;
-    }
-
-    .historyHeader {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin: 10px 0 8px;
-    }
-
-    .historyTitle {
-      font-size: 12px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      opacity: .7;
-      margin: 0;
-    }
-
-    .historyList {
-      border: 1px solid rgba(0,0,0,.12);
-      border-radius: 14px;
-      overflow: hidden;
-    }
-    @media (prefers-color-scheme: dark) {
-      .historyList { border-color: rgba(255,255,255,.14); }
-    }
-
-    .hrow {
-      display: grid;
-      grid-template-columns: 170px 1fr 110px;
-      gap: 10px;
-      padding: 10px 12px;
-      align-items: center;
-      border-top: 1px solid rgba(0,0,0,.08);
-      cursor: pointer;
-    }
+    footer { padding: 24px 0; text-align: center; font-size: 12px; opacity: .6; }
+    .historyWrap { max-width: 1200px; margin: 20px auto; padding: 0 14px; }
+    .historyList { border: 1px solid rgba(0,0,0,.12); border-radius: 14px; overflow: hidden; }
+    .hrow { display: grid; grid-template-columns: 150px 1fr 100px; gap: 10px; padding: 10px; border-top: 1px solid rgba(0,0,0,.05); cursor: pointer; font-size: 12px; }
     .hrow:first-child { border-top: 0; }
-    @media (prefers-color-scheme: dark) {
-      .hrow { border-top-color: rgba(255,255,255,.10); }
-    }
-    @media (max-width: 720px) {
-      .hrow { grid-template-columns: 1fr; gap: 6px; }
-    }
-
-    .htime { font-size: 12px; opacity: .75; white-space: nowrap; }
-    .htext { font-size: 12px; opacity: .9; min-width: 0; }
-    .htext b { font-weight: 800; }
-    .hopen {
-      justify-self: end;
-      font-size: 12px;
-      opacity: .8;
-      text-align: right;
-      white-space: nowrap;
-    }
-    @media (max-width: 720px) {
-      .hopen { justify-self: start; text-align: left; }
-    }
-
-    .muted { opacity: .65; }
-
-    .kwList { display: grid; gap: 6px; }
-    .kwRank { opacity: .6; font-variant-numeric: tabular-nums; }
-    .kwWord { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .kwBar {
-      height: 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.16);
-      overflow: hidden;
-      opacity: .9;
-    }
-    .kwBar > span {
-      display: block;
-      height: 100%;
-      background: rgba(0,32,194,.55);
-      width: 0%;
-    }
-    .kwCount { text-align: right; opacity: .75; font-variant-numeric: tabular-nums; }
-    @media (prefers-color-scheme: dark) {
-      .kwBar { border-color: rgba(255,255,255,.18); }
-      .kwBar > span { background: rgba(120,160,255,.6); }
-    }
-
-    .kwRowSimple{
-      display: grid;
-      grid-template-columns: 1fr 170px;
-      gap: 12px;
-      align-items: center;
-      font-size: 12px;
-      opacity: .92;
-    }
-    @media (max-width: 720px) {
-      .kwRowSimple{ grid-template-columns: 1fr 120px; }
-    }
-    .kwCountInline{ opacity: .7; font-variant-numeric: tabular-nums; }
-
-    #grid-trends .item { height: 100%; align-self: stretch; }
-
-    .trendCard{
-      height: auto;
-      max-height: min(420px, 72vh);
-      align-items: stretch;
-    }
-
-    .trendCard .left{
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-    .trendCard .actions{
-      align-content: start;
-    }
-    .trendBody{
-      margin-top: 8px;
-      flex: 1;
-      min-height: 0;
-      overflow: auto;
-      padding-right: 2px;
-    }
-
-    .newsList{ display: grid; gap: 8px; }
-    .newsItem{
-      border: 1px solid rgba(0,0,0,.10);
-      border-radius: 12px;
-      padding: 8px 10px;
-      cursor: pointer;
-    }
-    .newsItem:hover{ opacity: .95; }
-    .newsTitle{
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1.25;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .newsDomain{
-      margin-top: 4px;
-      font-size: 11px;
-      opacity: .7;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    @media (prefers-color-scheme: dark){
-      .newsItem{ border-color: rgba(255,255,255,.14); }
-    }
-
-    .trendFade {
-      position: relative;
-      overflow: auto;
-    }
-    .trendFade::after {
-      content: "";
-      position: sticky;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 34px;
-      pointer-events: none;
-      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
-    }
-    @media (prefers-color-scheme: dark) {
-      .trendFade::after {
-        background: linear-gradient(to bottom, rgba(20,20,20,0), rgba(20,20,20,1));
-      }
-    }
-
-    .kw2List{
-      display: grid;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    .kw2Row{
-      display: grid;
-      grid-template-columns: 1fr 180px;
-      gap: 14px;
-      align-items: center;
-    }
-
-    @media (max-width: 720px){
-      .kw2Row{ grid-template-columns: 1fr 150px; }
-    }
-
-    .kw2Word{
-      font-size: 13px;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .kw2Word .kw2Count{
-      font-weight: 600;
-      opacity: .55;
-    }
-
-    .kw2Bar{
-      height: 14px;
-      border-radius: 999px;
-      border: 2px solid rgba(0,0,0,.12);
-      background: rgba(0,0,0,.03);
-      overflow: hidden;
-    }
-
-    .kw2Bar > span{
-      display: block;
-      height: 100%;
-      width: 0%;
-      background: rgba(0,0,0,.28);
-    }
-
-    @media (prefers-color-scheme: dark){
-      .kw2Bar{
-        border-color: rgba(255,255,255,.18);
-        background: rgba(255,255,255,.05);
-      }
-      .kw2Bar > span{
-        background: rgba(255,255,255,.32);
-      }
-    }
-
-    :root{
-      --accent: #0020C2;
-      --border: rgba(0,0,0,.10);
-      --border-strong: rgba(0,0,0,.14);
-      --bg-soft: rgba(255,255,255,.72);
-      --shadow: 0 10px 30px rgba(0,0,0,.08);
-      --shadow-sm: 0 6px 18px rgba(0,0,0,.06);
-      --ring: 0 0 0 4px rgba(0,32,194,.14);
-      --radius: 16px;
-    }
-
-    @media (prefers-color-scheme: dark){
-      :root{
-        --border: rgba(255,255,255,.12);
-        --border-strong: rgba(255,255,255,.16);
-        --bg-soft: rgba(20,20,20,.60);
-        --shadow: 0 10px 30px rgba(0,0,0,.35);
-        --shadow-sm: 0 6px 18px rgba(0,0,0,.28);
-        --ring: 0 0 0 4px rgba(120,160,255,.16);
-      }
-    }
-
-    body{
-      background:
-        radial-gradient(1200px 500px at 18% -10%, rgba(0,32,194,.08), transparent 60%),
-        radial-gradient(900px 420px at 85% 0%, rgba(0,0,0,.06), transparent 55%),
-        linear-gradient(to bottom, rgba(255,255,255,.0), rgba(0,0,0,.02));
-    }
-    @media (prefers-color-scheme: dark){
-      body{
-        background:
-          radial-gradient(1200px 500px at 18% -10%, rgba(120,160,255,.10), transparent 60%),
-          radial-gradient(900px 420px at 85% 0%, rgba(255,255,255,.05), transparent 55%),
-          linear-gradient(to bottom, rgba(0,0,0,.0), rgba(255,255,255,.03));
-      }
-    }
-
-    header{
-      background: rgba(255,255,255,.78) !important;
-      border-bottom: 1px solid var(--border) !important;
-      box-shadow: 0 6px 24px rgba(0,0,0,.06);
-    }
-    @media (prefers-color-scheme: dark){
-      header{
-        background: rgba(18,18,18,.72) !important;
-        box-shadow: 0 10px 28px rgba(0,0,0,.40);
-      }
-    }
-
-    .wrap{ padding: 16px !important; }
-    h1{ letter-spacing: -0.01em; }
-    .hint{ opacity: .78 !important; }
-
-    .sectionTitle{
-      color: var(--accent) !important;
-      opacity: .82 !important;
-      letter-spacing: .10em !important;
-      margin: 18px 0 10px !important;
-    }
-
-    .grid{ gap: 12px !important; }
-
-    .item{
-      border: 1px solid var(--border) !important;
-      border-radius: var(--radius) !important;
-      background: var(--bg-soft);
-      box-shadow: var(--shadow-sm);
-      padding: 14px !important;
-      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-    }
-    .item:hover{
-      transform: translateY(-1px);
-      box-shadow: var(--shadow);
-      border-color: var(--border-strong) !important;
-    }
-
-    .left{ gap: 8px !important; }
-
-    .tag, .metaPill, .badge{
-      border-color: var(--border-strong) !important;
-      background: rgba(0,0,0,.03);
-    }
-    @media (prefers-color-scheme: dark){
-      .tag, .metaPill, .badge{
-        background: rgba(255,255,255,.04);
-      }
-    }
-    .tag{
-      font-weight: 700;
-      letter-spacing: .02em;
-    }
-    .metaPill{
-      font-weight: 650;
-    }
-    .badge{
-      font-weight: 700;
-    }
-
-    .title{
-      font-size: 14px !important;
-      letter-spacing: -0.01em;
-    }
-    .title:hover{ text-decoration: underline; text-underline-offset: 3px; }
-
-    .select, .text{
-      border-color: var(--border-strong) !important;
-      border-radius: 12px !important;
-      background: rgba(255,255,255,.55);
-      transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
-    }
-    @media (prefers-color-scheme: dark){
-      .select, .text{
-        background: rgba(255,255,255,.04);
-      }
-    }
-    .select:focus, .text:focus{
-      outline: none;
-      box-shadow: var(--ring);
-      border-color: rgba(0,32,194,.35) !important;
-    }
-
-    .btn{
-      border-color: var(--border-strong) !important;
-      border-radius: 999px !important;
-      background: rgba(255,255,255,.40);
-      transition: transform .12s ease, box-shadow .15s ease, opacity .15s ease, background .15s ease;
-    }
-    @media (prefers-color-scheme: dark){
-      .btn{ background: rgba(255,255,255,.04); }
-    }
-    .btn:hover{
-      opacity: 1 !important;
-      transform: translateY(-1px);
-      box-shadow: 0 10px 18px rgba(0,0,0,.10);
-    }
-    .btn:active{
-      transform: translateY(0px) scale(.99);
-      box-shadow: none;
-    }
-    .btn:focus-visible{
-      outline: none;
-      box-shadow: var(--ring);
-    }
-
-    .actions{
-      gap: 10px !important;
-      min-width: 210px;
-    }
-    .btnRow{ gap: 10px !important; }
-
-    .trendBody{
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0,0,0,.25) transparent;
-    }
-    .trendBody::-webkit-scrollbar{ width: 10px; }
-    .trendBody::-webkit-scrollbar-thumb{
-      background: rgba(0,0,0,.18);
-      border-radius: 999px;
-      border: 3px solid transparent;
-      background-clip: padding-box;
-    }
-    @media (prefers-color-scheme: dark){
-      .trendBody{
-        scrollbar-color: rgba(255,255,255,.25) transparent;
-      }
-      .trendBody::-webkit-scrollbar-thumb{
-        background: rgba(255,255,255,.18);
-        border: 3px solid transparent;
-        background-clip: padding-box;
-      }
-    }
-
-    .newsItem{
-      border-color: var(--border) !important;
-      background: rgba(255,255,255,.42);
-      transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
-    }
-    @media (prefers-color-scheme: dark){
-      .newsItem{ background: rgba(255,255,255,.04); }
-    }
-    .newsItem:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 10px 18px rgba(0,0,0,.10);
-      border-color: var(--border-strong) !important;
-    }
-
-    .trendFade::after{
-      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.92)) !important;
-    }
-    @media (prefers-color-scheme: dark){
-      .trendFade::after{
-        background: linear-gradient(to bottom, rgba(18,18,18,0), rgba(18,18,18,.92)) !important;
-      }
-    }
-
-    .kw2List{ gap: 12px !important; }
-    .kw2Row{ gap: 16px !important; }
-    .kw2Word{ letter-spacing: -0.01em; }
-    .kw2Word .kw2Count{ opacity: .55 !important; }
-
-    .kw2Bar{
-      height: 5px !important;
-      border: 1px solid var(--border-strong) !important;
-      background: rgba(0,0,0,.04) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
-    }
-    @media (prefers-color-scheme: dark){
-      .kw2Bar{
-        background: rgba(255,255,255,.06) !important;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
-      }
-    }
-    .kw2Bar > span{
-      background: linear-gradient(90deg, rgba(0,0,0,.18), rgba(0,0,0,.34)) !important;
-    }
-    @media (prefers-color-scheme: dark){
-      .kw2Bar > span{
-        background: linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.30)) !important;
-      }
-    }
-
-    .hrow{
-      transition: background .12s ease, border-color .12s ease;
-    }
-    .hrow:hover{
-      background: rgba(0,0,0,.03);
-    }
-    @media (prefers-color-scheme: dark){
-      .hrow:hover{ background: rgba(255,255,255,.04); }
-    }
-
-    .muted{ opacity: .68 !important; }
-    .tip{ opacity: .78 !important; }
-
   </style>
 </head>
-
 <body>
 <header>
   <div class="wrap">
     <h1>AI Trendboard</h1>
-    <div class="hint">AI 트렌드/언어/벤치마크/채용 시그널</div>
+    <div class="hint">AI 트렌드 / 나라장터 통합 레이더 / 채용 시그널</div>
 
-    <div class="sectionTitle">AI 트렌드</div>
-    <div class="grid" id="grid-trends"></div>
-
-    <div class="sectionTitle">탐색</div>
-    <div class="grid" id="grid-discovery"></div>
-
-    <div class="sectionTitle">HELM 벤치마크</div>
-    <div class="grid" id="grid-helm"></div>
-
-    <div class="sectionTitle">나라장터 레이더 (최근 1년치 기회)</div>
+    <div class="sectionTitle">나라장터 통합 레이더</div>
     <div class="subToolbar">
-      <span style="opacity:.85;">키워드:</span>
-      <input class="text" id="ppsKeyword" placeholder="예: AI, 데이터, LLM, 클라우드…" value="AI" />
+      <span>키워드:</span>
+      <input class="text" id="ppsKeyword" placeholder="검색어 입력 (AI, 데이터 등)" value="AI" />
       <span class="sep">|</span>
-      <span style="opacity:.85;">종류:</span>
-      <select class="select" id="ppsKind">
-        <option value="bid">입찰공고</option>
-        <option value="award">낙찰(개찰)</option>
-        <option value="contract">계약</option>
-      </select>
-      <select class="select" id="ppsBsnsDivCd" title="award(낙찰)일 때만 적용">
-        <option value="5">용역(5)</option>
-        <option value="1">물품(1)</option>
-        <option value="3">공사(3)</option>
-        <option value="2">외자(2)</option>
-      </select>
-      <button class="btn" id="ppsRefresh" style="min-width:110px;">새로고침</button>
-      <span class="muted" id="ppsMeta" style="font-size:12px;"></span>
+      <button class="btn" id="ppsRefresh" style="min-width:100px;">통합 검색</button>
+      <span id="ppsMeta" class="muted"></span>
     </div>
     <div class="grid" id="grid-pps"></div>
-
-    <div class="sectionTitle">채용 시그널</div>
-    <div class="subToolbar">
-      <span style="opacity:.85;">언어 옵션 선택:</span>
-      <select class="select" id="langSelect">
-        <option value="japanese">Japanese</option>
-        <option value="korean">Korean</option>
-        <option value="hindi">Hindi</option>
-        <option value="arabic">Arabic</option>
-        <option value="chinese">Chinese</option>
-        <option value="spanish">Spanish</option>
-        <option value="french">French</option>
-        <option value="bengali">Bengali</option>
-        <option value="portuguese">Portuguese</option>
-        <option value="russian">Russian</option>
-        <option value="urdu">Urdu</option>
-        <option value="indonesian">Indonesian</option>
-        <option value="german">German</option>
-        <option value="swahili">Swahili</option>
-        <option value="marathi">Marathi</option>
-        <option value="telugu">Telugu</option>
-        <option value="turkish">Turkish</option>
-        <option value="tamil">Tamil</option>
-        <option value="vietnamese">Vietnamese</option>
-      </select>
-      <input class="text" id="langCustom" placeholder="(선택) 커스텀 키워드 예: Thai, Data.." />
-      <span id="customBadge" class="badge" style="display:none;">✨ 커스텀 사용 중</span>
-      <span class="sep">|</span>
-      <span class="muted">직무 버튼 클릭 시 채용 사이트 내부 검색으로 열립니다.</span>
-    </div>
-    <div class="grid" id="grid-hiring"></div>
   </div>
 </header>
 
 <main></main>
 
 <div class="historyWrap">
-  <div class="historyHeader">
-    <p class="historyTitle">최근 접속 기록</p>
-    <button class="btn" id="clearHistoryBtn" style="min-width:110px;">기록 지우기</button>
-  </div>
+  <div class="sectionTitle">최근 접속 기록</div>
   <div class="historyList" id="historyList"></div>
-  <div class="muted" style="margin-top:8px; font-size:12px;">* 기록은 사용자 개인 localStorage에 저장됩니다.</div>
 </div>
 
-<footer>conceived &amp; built by cw park</footer>
+<footer>conceived & built by cw park</footer>
 
 <script>
-  // --- History (localStorage) ---
-  const HISTORY_KEY = "radar_open_history_v1";
-  const HISTORY_MAX = 60;
-
-  function readHistory(){
-    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }
-    catch { return []; }
-  }
-  function writeHistory(list){ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
-  function nowKSTString(){
-    const d = new Date();
-    const pad = (n)=> String(n).padStart(2,"0");
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
-  function addHistory(entry){
-    const list = readHistory();
-    const top = list[0];
-    if (top && top.url === entry.url) { list[0] = entry; } else { list.unshift(entry); }
-    if (list.length > HISTORY_MAX) list.length = HISTORY_MAX;
-    writeHistory(list); renderHistory();
-  }
-
+  // --- History & Helpers ---
+  const HISTORY_KEY = "radar_history_v2";
+  function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   function openAndLog(url, label, tag){
-    addHistory({ time: nowKSTString(), label: label || "열기", tag: tag || "", url });
-    window.open(url, "_blank", "noopener,noreferrer");
+    const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    list.unshift({ time: new Date().toLocaleString(), label, tag, url });
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 50)));
+    renderHistory();
+    window.open(url, "_blank");
   }
-
   function renderHistory(){
     const box = document.getElementById("historyList");
-    const list = readHistory();
-    if (!list.length) {
-      box.innerHTML = `<div class="hrow" style="cursor:default;"><div class="htime muted">-</div><div class="htext muted">아직 기록이 없어요.</div><div class="hopen muted">-</div></div>`;
-      return;
-    }
-    box.innerHTML = "";
-    list.forEach((h) => {
-      const row = document.createElement("div");
-      row.className = "hrow";
-      row.innerHTML = `<div class="htime">${escapeHtml(h.time || "")}</div><div class="htext">${h.tag ? `<span class="metaPill" style="margin-right:6px;">${escapeHtml(h.tag)}</span>` : ``}<b>${escapeHtml(h.label || "")}</b><span class="muted" style="margin-left:6px;">${escapeHtml((h.url || "").replace(/^https?:\/\//,""))}</span></div><div class="hopen">다시 열기 ↗</div>`;
-      row.onclick = () => openAndLog(h.url, h.label, h.tag);
-      box.appendChild(row);
-    });
+    const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    box.innerHTML = list.map(h => `<div class="hrow" onclick="window.open('${h.url}','_blank')"><div>${h.time}</div><div><b>[${h.tag}]</b> ${h.label}</div><div style="text-align:right">↗</div></div>`).join("") || "<div class='p-3 muted'>기록 없음</div>";
   }
 
-  document.getElementById("clearHistoryBtn").onclick = () => { writeHistory([]); renderHistory(); };
-
-  // --- Helpers ---
-  function escapeHtml(str){
-    return (str || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-  }
-
-  // --- AI Trend Pulse (GDELT) ---
-  const TREND_CONFIG = {
-    gdeltQuery: '(AI OR "artificial intelligence" OR "generative ai" OR "large language model" OR LLM OR "foundation model" OR "machine learning")',
-    gdeltMode: "ArtList", gdeltFormat: "json", gdeltMaxRecords: 120, gdeltTimespan: "14d",
-    cacheTtlMs: 30 * 60 * 1000, keywordTopN: 10, latestTopN: 10, cardHeightPx: 420
-  };
-  const TREND_CACHE_KEY = "radar_trend_pulse_v3";
-  const AI_TOPICS = [
-    { key:"multimodal", label:"multimodal", terms:["multimodal","vision-language","vlm","vqa","gpt-4v","clip"]},
-    { key:"video_gen", label:"video generation", terms:["text-to-video","video generation","sora","runway","pika"]},
-    { key:"rlhf", label:"rlhf", terms:["rlhf","rlaif","dpo","ppo","preference tuning"]},
-    { key:"agents", label:"agents", terms:["agent","agentic","autonomous agent","tool use","function calling"]},
-    { key:"rag", label:"rag", terms:["rag","retrieval augmented","vector database","embedding"]},
-    { key:"inference", label:"inference", terms:["inference","latency","throughput","quantization","fp8"]},
-    { key:"open_source", label:"open source", terms:["open source","llama","mistral","qwen","gemma"]},
-    { key:"chips", label:"chips", terms:["gpu","h100","blackwell","nvidia","amd","tpu"]}
-  ];
-
-  function countTopicsFromTitles(titles){
-    const counts = new Map(AI_TOPICS.map(t => [t.key, 0]));
-    let matchedTitles = 0;
-    for (const raw of (titles || [])) {
-      const t = raw.toLowerCase();
-      let any = false;
-      for (const topic of AI_TOPICS) {
-        for (const term of topic.terms) {
-          if (t.includes(term)) { counts.set(topic.key, (counts.get(topic.key) || 0) + 1); any = true; break; }
-        }
-      }
-      if (any) matchedTitles += 1;
-    }
-    const rows = AI_TOPICS.map(topic => ({ label: topic.label, count: counts.get(topic.key) || 0 })).filter(r => r.count > 0).sort((a,b) => b.count - a.count);
-    return { top: rows.slice(0, TREND_CONFIG.keywordTopN), max: rows.length ? Math.max(...rows.map(r=>r.count)) : 1, matchedTitles, totalTitles: titles.length };
-  }
-
-  async function fetchWithCache(cacheKey, ttlMs, fetcher){
-    const now = Date.now();
+  // --- PPS 통합 검색 로직 ---
+  async function fetchPpsData(kind, q) {
     try {
-      const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
-      if (cached && (now - cached.ts) < ttlMs) return { data: cached.data, fromCache: true, ts: cached.ts };
-    } catch {}
-    const data = await fetcher();
-    localStorage.setItem(cacheKey, JSON.stringify({ ts: now, data }));
-    return { data, fromCache: false, ts: now };
+      const r = await fetch(`/api/pps?kind=${kind}&q=${encodeURIComponent(q)}`);
+      if (!r.ok) return [];
+      const json = await r.json();
+      return json.items || [];
+    } catch (e) { return []; }
   }
 
-  async function fetchGdeltArticles(){
-    const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(TREND_CONFIG.gdeltQuery)}&mode=ArtList&format=json&maxrecords=${TREND_CONFIG.gdeltMaxRecords}&timespan=${TREND_CONFIG.gdeltTimespan}`;
-    const res = await fetch(url);
-    const json = await res.json();
-    return (json.articles || []).filter(a => a.title);
-  }
-
-  function kwBarsHtml(top, max){
-    if (!top.length) return `<div class="muted">매칭된 토픽 없음</div>`;
-    return `<div class="kw2List">${top.map(r => `<div class="kw2Row"><div class="kw2Word">${escapeHtml(r.label)} <span class="kw2Count">(${r.count})</span></div><div class="kw2Bar"><span style="width:${Math.max(4, (r.count/max)*100)}%"></span></div></div>`).join("")}</div>`;
-  }
-
-  async function renderTrendPulseNews(force=false){
-    const box = document.getElementById("trend-news-body");
-    const meta = document.getElementById("trend-news-meta");
-    if(force) localStorage.removeItem(TREND_CACHE_KEY + "_gdelt_articles");
-    try {
-      const { data, fromCache, ts } = await fetchWithCache(TREND_CACHE_KEY + "_gdelt_articles", TREND_CONFIG.cacheTtlMs, fetchGdeltArticles);
-      const { top, max, matchedTitles, totalTitles } = countTopicsFromTitles(data.map(a => a.title));
-      box.innerHTML = kwBarsHtml(top, max);
-      meta.textContent = `${fromCache ? "cached" : "live"} · ${matchedTitles}/${totalTitles} · ${new Date(ts).toLocaleTimeString()}`;
-    } catch(e) { box.innerHTML = `<div class="muted">오류 발생</div>`; }
-  }
-
-  async function renderTrendPulseHeadlines(force=false){
-    const box = document.getElementById("trend-headlines-body");
-    const meta = document.getElementById("trend-headlines-meta");
-    try {
-      const { data, ts } = await fetchWithCache(TREND_CACHE_KEY + "_gdelt_articles", TREND_CONFIG.cacheTtlMs, fetchGdeltArticles);
-      const top = data.slice(0, 10);
-      box.innerHTML = `<div class="newsList">${top.map(a => `<div class="newsItem" onclick="openAndLog('${a.url}', '${escapeHtml(a.title)}', 'NEWS')"><div class="newsTitle">${escapeHtml(a.title)}</div><div class="newsDomain">${a.domain}</div></div>`).join("")}</div>`;
-      meta.textContent = `Top 10 · ${new Date(ts).toLocaleTimeString()}`;
-    } catch(e) { box.innerHTML = `<div class="muted">오류 발생</div>`; }
-  }
-
-  function renderTrends(){
-    const grid = document.getElementById("grid-trends");
-    grid.innerHTML = `
-      <div class="item trendCard"><div class="left"><div class="top"><span class="tag">NEWS</span><span class="title">AI Keywords</span></div><div class="metaLine"><span id="trend-news-meta" class="muted"></span></div><div id="trend-news-body" class="trendBody trendFade"></div></div><div class="actions"><button class="btn" onclick="renderTrendPulseNews(true)">새로고침</button></div></div>
-      <div class="item trendCard"><div class="left"><div class="top"><span class="tag">NEWS</span><span class="title">Latest AI News</span></div><div class="metaLine"><span id="trend-headlines-meta" class="muted"></span></div><div id="trend-headlines-body" class="trendBody trendFade"></div></div><div class="actions"><button class="btn" onclick="renderTrendPulseHeadlines(true)">새로고침</button></div></div>`;
-    renderTrendPulseNews(); renderTrendPulseHeadlines();
-  }
-
-  // --- PPS (나라장터) Radar ---
-  const PPS_CACHE_KEY = "radar_pps_cache_v3";
-  const PPS_TTL_MS = 10 * 60 * 1000;
-
-  async function fetchPps(kind, q, bsnsDivCd, force=false){
-    const key = `${PPS_CACHE_KEY}:${kind}:${q}:${bsnsDivCd || ""}`;
-    const now = Date.now();
-    if (!force) {
-      try {
-        const cached = JSON.parse(localStorage.getItem(key) || "null");
-        if (cached && (now - cached.ts) < PPS_TTL_MS) return cached;
-      } catch {}
-    }
-    const params = new URLSearchParams({ kind, q });
-    if(kind === "award" && bsnsDivCd) params.set("bsnsDivCd", bsnsDivCd);
-    const r = await fetch(`/api/pps?${params.toString()}`);
-    const data = await r.json();
-    const result = { ts: now, data };
-    localStorage.setItem(key, JSON.stringify(result));
-    return result;
-  }
-
-  function renderPpsItems(items){
+  function renderPpsItems(items) {
     const grid = document.getElementById("grid-pps");
-    const oldBar = document.querySelector(".pps-summary-bar");
-    if(oldBar) oldBar.remove();
+    grid.innerHTML = "";
 
-    if(!items || !items.length){
-      grid.innerHTML = `<div class="item"><div class="left"><div class="top"><span class="tag">PPS</span><span class="title">결과 없음</span></div><div class="tip">1년 내 키워드와 일치하는 공고가 없습니다.</div></div></div>`;
+    if (!items.length) {
+      grid.innerHTML = "<div class='item'>결과가 없습니다.</div>";
       return;
     }
 
-    // 통계 분석
+    // 데이터 분석
     const orgMap = {}; let totalAmt = 0; let amtCount = 0;
     items.forEach(it => {
       if(it.org) orgMap[it.org] = (orgMap[it.org] || 0) + 1;
-      const n = parseInt(String(it.amount || "0").replace(/[^0-9]/g, ""));
+      const n = parseInt(it.amount.replace(/[^0-9]/g, ""));
       if(n > 0){ totalAmt += n; amtCount++; }
     });
     const topOrg = Object.entries(orgMap).sort((a,b)=>b[1]-a[1])[0];
     const avgAmt = amtCount > 0 ? Math.round(totalAmt/amtCount) : 0;
 
+    // 요약 바 추가
     const summaryBar = document.createElement("div");
     summaryBar.className = "pps-summary-bar";
-    summaryBar.innerHTML = `📊 <b>1년 요약:</b> 최다 발주 <span class="summary-chip">${topOrg?.[0]||"-"}</span>(${topOrg?.[1]||0}건) | 평균 예산 <span class="summary-chip">₩${avgAmt.toLocaleString()}</span> | 날짜순 정렬`;
-    grid.before(summaryBar);
+    summaryBar.innerHTML = `📊 <b>통합 분석:</b> 최다 발주 <span class="summary-chip">${topOrg?.[0]||"-"}</span>(${topOrg?.[1]||0}건) | 평균 규모 <span class="summary-chip">₩${avgAmt.toLocaleString()}</span> | 최신순 정렬`;
+    grid.appendChild(summaryBar);
 
-    // 날짜 역순 정렬
-    const sorted = [...items].sort((a,b) => (b.date||"").localeCompare(a.date||""));
+    // 날짜순 정렬
+    const sorted = items.sort((a,b) => b.date.localeCompare(a.date));
 
-    grid.innerHTML = "";
     sorted.forEach(it => {
       const el = document.createElement("div");
       el.className = "item";
@@ -975,72 +141,53 @@
       if(it.status?.includes("정정")) el.classList.add("status-correct");
 
       const icon = it.status?.includes("취소") ? "❌" : it.status?.includes("정정") ? "⚠️" : "📄";
+      const tagColor = it.kind === "bid" ? "#0020C2" : it.kind === "award" ? "#228B22" : "#800080";
+      
       el.innerHTML = `
         <div class="left">
-          <div class="top"><span class="tag">PPS</span><span class="title" onclick="openAndLog('${it.url}', '${escapeHtml(it.title)}', 'PPS')">${icon} ${escapeHtml(it.title)}</span></div>
+          <div class="top">
+            <span class="tag" style="color:${tagColor}; border-color:${tagColor}">${it.kind.toUpperCase()}</span>
+            <span class="title" title="${it.title}">${icon} ${escapeHtml(it.title)}</span>
+          </div>
           <div class="metaLine">
-            <span class="metaPill">${escapeHtml(it.date)}</span>
+            <span class="metaPill">${it.date}</span>
             <span class="metaPill">${escapeHtml(it.org)}</span>
-            <span class="metaPill" style="font-weight:800; color:var(--accent);">₩${it.amount || "0"}</span>
+            <span class="metaPill" style="font-weight:800; color:var(--accent)">₩${it.amount}</span>
             ${it.status ? `<span class="metaPill">${it.status}</span>` : ""}
           </div>
-          <div class="tip">${it.winner ? `낙찰: ${it.winner}` : it.period ? `사업기간: ${it.period}` : "현재 입찰 진행 중"}</div>
+          <div class="tip">${it.winner ? `낙찰: ${it.winner}` : it.period ? `기간: ${it.period}` : "입찰 진행 중"}</div>
         </div>
-        <div class="actions"><button class="btn" onclick="openAndLog('${it.url}', '${escapeHtml(it.title)}', 'PPS')">상세보기 ↗</button></div>`;
+        <div class="actions">
+          <button class="btn" onclick="openAndLog('${it.url}', '${escapeHtml(it.title)}', 'PPS')">상세보기 ↗</button>
+        </div>
+      `;
       grid.appendChild(el);
     });
   }
 
-  async function renderPps(force=false){
+  async function performIntegratedSearch() {
+    const q = document.getElementById("ppsKeyword").value.trim() || "AI";
     const meta = document.getElementById("ppsMeta");
-    const kind = document.getElementById("ppsKind").value;
-    const q = document.getElementById("ppsKeyword").value || "AI";
-    meta.textContent = "최근 1년 데이터 탐색 중...";
-    try {
-      const { data, ts } = await fetchPps(kind, q, null, force);
-      renderPpsItems(data.items || []);
-      meta.textContent = `${data.items?.length || 0}건 발견 · ${new Date(ts).toLocaleTimeString()}`;
-    } catch(e) { meta.textContent = "불러오기 실패"; }
+    meta.textContent = "통합 검색 중 (입찰+낙찰+계약)...";
+
+    // 3가지 API 동시 호출
+    const results = await Promise.all([
+      fetchPpsData("bid", q),
+      fetchPpsData("award", q),
+      fetchPpsData("contract", q)
+    ]);
+
+    const combinedItems = results.flat();
+    renderPpsItems(combinedItems);
+    meta.textContent = `${combinedItems.length}건의 기회 발견`;
   }
 
-  // --- Discovery/HELM/Hiring ---
-  const PAGES = [
-    {id:"hf", group:"discovery", title:"Hugging Face Papers", tag:"Low-resource", url:"https://huggingface.co/papers/trending?q=Low-resource+languages", tip:"데이터 부족 언어 관련 최신 논문 트렌드"},
-    {id:"xtreme", group:"discovery", title:"XTREME (Google)", tag:"Benchmark", url:"https://sites.research.google/xtreme", tip:"다국어 벤치마크 성능 비교"},
-    {id:"sea", group:"helm", title:"HELM SEAHELM", tag:"SEA", url:"https://crfm.stanford.edu/helm/seahelm/latest/", tip:"동남아 언어별 성능 지표"},
-    {id:"hire_google", group:"hiring", title:"Google", tag:"Tech", companyId:"google", tip:"Google 채용 검색"},
-    {id:"hire_naver", group:"hiring", title:"NAVER", tag:"Local", companyId:"naver", tip:"NAVER 채용 검색"}
-  ];
-
-  function renderGroup(group){
-    const grid = document.getElementById(`grid-${group}`);
-    grid.innerHTML = "";
-    PAGES.filter(p=>p.group===group).forEach(p=>{
-      const el = document.createElement("div");
-      el.className = "item";
-      el.innerHTML = `<div class="left"><div class="top"><span class="tag">${p.tag}</span><span class="title">${p.title}</span></div><div class="tip">${p.tip}</div></div><div class="actions"><button class="btn" onclick="openAndLog('${p.url||'#'}', '${p.title}', '${p.tag}')">원문 ↗</button></div>`;
-      if(group === "hiring"){
-        const q = encodeURIComponent(document.getElementById("langCustom").value || document.getElementById("langSelect").value);
-        const url = p.companyId === "google" ? `https://careers.google.com/jobs/results/?q=${q}` : `https://recruit.navercorp.com/rcrt/list.do?sw=${q}`;
-        el.querySelector("button").onclick = () => openAndLog(url, p.title, p.tag);
-      }
-      grid.appendChild(el);
-    });
-  }
-
-  function renderAll(){
-    renderTrends(); renderGroup("discovery"); renderGroup("helm"); renderGroup("hiring");
-    renderPps(false); renderHistory(); updateCustomBadge();
-  }
-
-  function updateCustomBadge(){ document.getElementById("customBadge").style.display = document.getElementById("langCustom").value ? "inline-flex" : "none"; }
-  document.getElementById("ppsKeyword").onkeydown = (e) => { if(e.key === "Enter") renderPps(true); };
-  document.getElementById("ppsRefresh").onclick = () => renderPps(true);
-  document.getElementById("ppsKind").onchange = () => renderPps(false);
-  document.getElementById("langSelect").onchange = renderAll;
-  document.getElementById("langCustom").oninput = renderAll;
-
-  renderAll();
+  // --- Init ---
+  document.getElementById("ppsRefresh").onclick = performIntegratedSearch;
+  document.getElementById("ppsKeyword").onkeydown = e => { if(e.key === "Enter") performIntegratedSearch(); };
+  
+  renderHistory();
+  performIntegratedSearch();
 </script>
 </body>
 </html>
