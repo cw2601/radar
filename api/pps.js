@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   try {
     const kind = normalizeKind(req.query.kind);
-    const qRaw = String(req.query.q ?? "AI").trim();
+    const qRaw = String(req.query.q ?? "").trim();
     const q = qRaw.slice(0, 60);
 
     const serviceKeyRaw = process.env.DATA_GO_KR_SERVICE_KEY;
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       serviceKey,
       type: "json",
       pageNo: String(req.query.pageNo || "1"),
-      numOfRows: String(req.query.numOfRows || "50"),
+      numOfRows: String(req.query.numOfRows || "100"), // 기본값 100으로 증가
     });
 
     if (kind === "bid") {
@@ -179,11 +179,16 @@ function extractItems(raw, kind, q) {
   const arr = Array.isArray(list) ? list : [list].filter(Boolean);
 
   const qlc = String(q || "").toLowerCase().trim();
-  const hasQ = (s) => String(s || "").toLowerCase().includes(qlc);
+  
+  // 검색어가 있을 때만 필터링 (대소문자 구분 없이)
+  const hasQ = (s) => {
+    if (!qlc) return true; // 검색어가 없으면 모두 통과
+    const str = String(s || "").toLowerCase();
+    return str.includes(qlc);
+  };
 
   const mapped = arr.map((x) => {
     if (kind === "bid") {
-      // 실제 필드명에 맞게 수정
       const title = x?.bidNtceNm || "Untitled";
       const bidNo = x?.bidNtceNo || "";
       const bidOrd = x?.bidNtceOrd || "";
@@ -192,9 +197,11 @@ function extractItems(raw, kind, q) {
       
       return {
         title,
-        date: date && time ? `${date} ${time}` : date || time || "",
+        date: date,
+        time: time,
         org: x?.ntceInsttNm || x?.dmndInsttNm || "",
         amount: prettifyAmount(x?.asignBdgtAmt ?? x?.presmptPrce ?? ""),
+        status: x?.bidNtceSttusNm || "",
         _idA: bidNo,
         _idB: bidOrd,
       };
@@ -202,32 +209,41 @@ function extractItems(raw, kind, q) {
 
     if (kind === "award") {
       const title = x?.bidNtceNm || "Untitled";
+      const date = x?.opengDate || "";
+      const time = x?.opengTm || "";
+      
       return {
         title,
-        date: x?.opengDate || "",
+        date: date,
+        time: time,
         org: x?.ntceInsttNm || x?.dmndInsttNm || "",
         amount: prettifyAmount(x?.scsbidAmt ?? x?.cntrctAmt ?? ""),
         winner: x?.prtcptnEntrpsNm || x?.sucsfnEntrpsNm || "",
+        status: x?.bidNtceSttusNm || "",
       };
     }
 
     // contract
     const title = x?.cntrctNm || x?.bidNtceNm || "Untitled";
+    const date = x?.cntrctCnclsDate || x?.cntrctDate || "";
+    
     return {
       title,
-      date: x?.cntrctCnclsDate || x?.cntrctDate || "",
+      date: date,
       org: x?.dmndInsttNm || x?.cntrctInsttNm || x?.ntceInsttNm || "",
       amount: prettifyAmount(x?.cntrctAmt ?? x?.contAmt ?? ""),
       period: x?.cntrctPrd || x?.cntrctPeriod || "",
+      status: x?.cntrctCnclsSttusNm || "",
     };
   });
 
-  const filtered = qlc ? mapped.filter((it) => hasQ(it.title) || hasQ(it.org)) : mapped;
+  // 필터링: 제목 또는 기관명에 검색어 포함
+  const filtered = mapped.filter((it) => hasQ(it.title) || hasQ(it.org));
 
   const mkSearchUrl = (keyword) =>
     `https://www.g2b.go.kr:8101/ep/tbid/tbidList.do?bidNm=${encodeURIComponent(keyword || "")}`;
 
-  const withUrl = filtered.slice(0, 20).map((it) => {
+  const withUrl = filtered.map((it) => {
     if (kind === "bid" && it._idA) {
       const bidno = String(it._idA);
       const bidseq = String(it._idB || "00").padStart(2, "0");
@@ -235,9 +251,9 @@ function extractItems(raw, kind, q) {
         `https://www.g2b.go.kr:8081/ep/invitation/publish/bidInfoDtl.do` +
         `?bidno=${encodeURIComponent(bidno)}&bidseq=${encodeURIComponent(bidseq)}` +
         `&releaseYn=Y&taskClCd=5`;
-      return { ...it, url: deep, fallbackUrl: mkSearchUrl(it.title) };
+      return { ...it, url: deep };
     }
-    return { ...it, url: mkSearchUrl(it.title), fallbackUrl: mkSearchUrl(it.title) };
+    return { ...it, url: mkSearchUrl(it.title) };
   });
 
   return {
