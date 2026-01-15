@@ -8,10 +8,11 @@ export default async function handler(req, res) {
 
   try {
     const kind = req.query.kind || "bid";
-    const q = String(req.query.q || "").trim();
-
-    const serviceKey = process.env.DATA_GO_KR_SERVICE_KEY;
-    if (!serviceKey) return res.status(500).json({ error: "Missing Key" });
+    const q = String(req.query.q ?? "").trim();
+    const serviceKeyRaw = process.env.DATA_GO_KR_SERVICE_KEY;
+    
+    if (!serviceKeyRaw) return res.status(500).json({ error: "Missing Key" });
+    const serviceKey = serviceKeyRaw.includes("%") ? serviceKeyRaw : encodeURIComponent(serviceKeyRaw);
 
     const base = "https://apis.data.go.kr/1230000/ao/PubDataOpnStdService";
     const endpointByKind = {
@@ -22,9 +23,10 @@ export default async function handler(req, res) {
 
     const endpoint = endpointByKind[kind] || endpointByKind.bid;
 
-    // --- KST 기준 1년(365일) 날짜 범위 계산 ---
+    // --- KST 기준 날짜 범위 계산 (기존 설정 유지) ---
     const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
-    const fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); // 1년 전
+    const daysBack = kind === "award" ? 6 : 29;
+    const fromDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
 
     const fmt = (d) => {
       const y = d.getUTCFullYear();
@@ -37,10 +39,10 @@ export default async function handler(req, res) {
     const toYmd = fmt(now);
 
     const params = new URLSearchParams({
-      serviceKey: serviceKey.includes("%") ? serviceKey : encodeURIComponent(serviceKey),
+      serviceKey,
       type: "json",
       pageNo: "1",
-      numOfRows: "200", // 검색 범위를 넓히기 위해 로우 수 상향
+      numOfRows: "100",
     });
 
     if (kind === "bid") {
@@ -56,41 +58,54 @@ export default async function handler(req, res) {
     }
 
     const url = `${endpoint}?${params.toString()}`;
-    const r = await fetch(url);
-    const text = await r.text();
-    
-    let json;
-    try { json = JSON.parse(text); } catch { return res.status(502).json({ error: "API Error", detail: text }); }
+    const response = await fetch(url);
+    const text = await response.text();
 
-    // 데이터 추출 및 필터링
-    let list = json?.response?.body?.items || [];
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      return res.status(502).json({ error: "Non-JSON response", detail: text.slice(0, 200) });
+    }
+
+    // 데이터 추출
+    let list = json?.response?.body?.items ?? [];
     if (!Array.isArray(list) && list?.item) list = list.item;
     const arr = Array.isArray(list) ? list : [list].filter(Boolean);
 
-    const qlc = q.toLowerCase();
     const items = arr.map(x => {
-      const it = {
-        title: x.bidNtceNm || x.cntrctNm || "제목없음",
-        date: x.bidNtceDate || x.opengDate || x.cntrctCnclsDate || "",
-        org: x.ntceInsttNm || x.dminsttNm || "",
-        amount: (x.asignBdgtAmt || x.scsbidAmt || x.cntrctAmt || "0").toLocaleString(),
-        status: x.bidNtceSttusNm || "",
-        winner: x.prtcptnEntrpsNm || "",
-        period: x.cntrctPrd || "",
-        url: `https://www.g2b.go.kr:8101/ep/tbid/tbidList.do?bidNm=${encodeURIComponent(x.bidNtceNm || x.cntrctNm)}`
-      };
+      const title = x.bidNtceNm || x.cntrctNm || "제목 없음";
+      const org = x.ntceInsttNm || x.dminsttNm || x.cntrctInsttNm || "";
+      const date = x.bidNtceDate || x.opengDate || x.cntrctCnclsDate || "";
+      const amount = x.asignBdgtAmt || x.scsbidAmt || x.cntrctAmt || "0";
       
-      // BID 상세 페이지 링크 생성 로직
+      let detailUrl = `https://www.g2b.go.kr:8101/ep/tbid/tbidList.do?bidNm=${encodeURIComponent(title)}`;
       if (kind === "bid" && x.bidNtceNo) {
-        it.url = `https://www.g2b.go.kr:8081/ep/invitation/publish/bidInfoDtl.do?bidno=${x.bidNtceNo}&bidseq=${(x.bidNtceOrd || "00").padStart(2, "0")}&releaseYn=Y&taskClCd=5`;
+        detailUrl = `https://www.g2b.go.kr:8081/ep/invitation/publish/bidInfoDtl.do?bidno=${x.bidNtceNo}&bidseq=${(x.bidNtceOrd || "00").padStart(2, "0")}&releaseYn=Y&taskClCd=5`;
       }
-      return it;
-    }).filter(it => !q || it.title.toLowerCase().includes(qlc) || it.org.toLowerCase().includes(qlc));
 
-    res.setHeader("Cache-Control", "s-maxage=600");
+      return {
+        kind,
+        title,
+        org,
+        date,
+        amount: formatAmount(amount),
+        status: x.bidNtceSttusNm || "",
+        winner: x.prtcptnEntrpsNm || x.sucsfnEntrpsNm || "",
+        period: x.cntrctPrd || "",
+        url: detailUrl
+      };
+    });
+
     return res.status(200).json({ items });
 
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
+}
+
+function formatAmount(v) {
+  const n = parseInt(String(v || "0").replace(/[^0-9]/g, ""), 10);
+  if (isNaN(n) || n === 0) return "0";
+  return n.toLocaleString("ko-KR");
 }
