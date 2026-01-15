@@ -180,9 +180,9 @@ function extractItems(raw, kind, q) {
 
   const qlc = String(q || "").toLowerCase().trim();
   
-  // 검색어로 필터링
+  // ✅ 검색어로 필터링 (q가 비어있으면 모든 항목 반환)
   const hasQ = (s) => {
-    if (!qlc) return true;
+    if (!qlc) return true; // 검색어 없으면 모두 통과
     const str = String(s || "").toLowerCase();
     return str.includes(qlc);
   };
@@ -237,7 +237,7 @@ function extractItems(raw, kind, q) {
     };
   });
 
-  // 필터링: 제목 또는 기관명에 검색어 포함
+  // ✅ 필터링: 제목 또는 기관명에 검색어 포함 (대소문자 구분 없이)
   const filtered = mapped.filter((it) => hasQ(it.title) || hasQ(it.org));
 
   const mkSearchUrl = (keyword) =>
